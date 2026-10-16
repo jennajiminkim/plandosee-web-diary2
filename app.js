@@ -112,7 +112,27 @@ function importPreview(){
      '<div class="panel"><strong>'+esc(body.valid?'구조 검사 완료':'구조 검사에서 문제 발견')+'</strong>'+
      '<p>총 '+Number(body.total_records)+'건 · '+esc(details)+'</p>'+
      '<p>이 화면은 파일만 검사합니다. 기존 기록은 변경되지 않습니다.</p></div>'+
-     (body.issues.length?'<div class="panel"><strong>확인해야 할 내용</strong><ul>'+body.issues.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'<p class="help">기본 구조와 연결 ID 검사에 문제가 없습니다. 실제 데이터 가져오기는 아직 잠겨 있습니다.</p>'));
+     (body.issues.length?'<div class="panel"><strong>확인해야 할 내용</strong><ul>'+body.issues.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'<p class="help">구조 검사가 완료됐습니다. 기존 개인 기록을 삭제하지 않고, 가져오는 기록에는 새 ID를 부여합니다.</p>')+
+     (body.valid?'<div class="panel"><p><strong>주의: 실제 저장 작업입니다.</strong> 현재 계정의 기록과 합쳐집니다. 완료 후에는 한 번에 되돌리기 기능이 없습니다.</p><label style="display:flex;gap:9px;align-items:center"><input id="importAgree" type="checkbox" style="width:auto;min-height:0">이 파일을 내 계정에 저장하는 데 동의합니다.</label><button id="importCommit" class="primary" type="button" disabled>확인하고 '+Number(body.total_records)+'건 가져오기</button><p id="importFeedback" role="status" aria-live="polite"></p></div>':''),
+     root=>{
+      const checkbox=root.querySelector('#importAgree'),button=root.querySelector('#importCommit'),feedback=root.querySelector('#importFeedback');
+      if(!button)return;
+      checkbox.onchange=()=>button.disabled=!checkbox.checked;
+      button.onclick=async()=>{
+       if(!checkbox.checked)return;
+       if(!confirm('선택한 JSON의 '+Number(body.total_records)+'건을 현재 로그인 계정에 추가할까요? 이미 저장한 기록은 유지합니다.'))return;
+       button.disabled=true;checkbox.disabled=true;feedback.textContent='기록을 안전하게 옮기는 중... 창을 닫지 마세요.';
+       try{
+        const r=await fetch('/api/import',{method:'POST',credentials:'same-origin',cache:'no-store',
+         headers:{'Content-Type':'application/json'},body:JSON.stringify({confirm:'IMPORT',data})});
+        const result=await r.json();
+        if(!r.ok)throw Error(result.error||'가져오기 실패');
+        feedback.textContent=Number(result.count)+'건을 내 계정에 저장했습니다. 새로고침 후 확인해 주세요.';
+        await load();
+        toast('기록 가져오기 완료: '+Number(result.count)+'건');
+       }catch(e){feedback.textContent='저장하지 못했습니다: '+e.message;checkbox.disabled=false;button.disabled=false;}
+      };
+     });
   }catch(e){toast('가져오기 미리보기 실패: '+e.message)}
  };
  chooser.click();
