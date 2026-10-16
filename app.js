@@ -50,7 +50,7 @@ function openPlan(p=null){const w=days(),val=p||{title:'',start_date:w[0],end_da
 function openTask(t=null){
  const dd=days(),today=todaySeoul(),base=t||{title:'',first_step:'',plan_id:'',priority:activeTasks().length+1,tag:'생활',color:tags['생활'],start_date:dd[0],end_date:dd[6],due_date:null,mode:'single',estimated_minutes:0,estimate_basis:'total',status:'active'};
  const same=a=>base.start_date===a&&base.end_date===a;
- const schedule=t?(base.mode==='repeat'?'repeat':same(today)?'today':base.start_date===dd[0]&&base.end_date===dd[6]?'week':'custom'):'week';
+ const schedule=t?(base.mode==='repeat'?'repeat':base.mode==='range'?'custom':same(today)?'today':base.start_date===dd[0]&&base.end_date===dd[6]?'week':'custom'):'week';
  const options=[['','없음 · 자유로운 할 일'],...activePlans().map(p=>[p.id,p.title]),...(base.plan_id&&!activePlans().some(p=>p.id===base.plan_id)?[[base.plan_id,'삭제된 계획 · 이전 기록 연결']]:[])];
  drawer(t?'할 일 상세':'할 일 추가',`<form id="taskForm">
  <div class="drawer-kicker">PLAN · 시작하기 전에</div>
@@ -76,7 +76,7 @@ function openTask(t=null){
    if(val==='today'){start.value=today;end.value=today;hint.textContent='오늘 하루로 설정됩니다.'}
    else if(val==='week'){start.value=dd[0];end.value=dd[6];hint.textContent='선택한 주의 월요일부터 일요일까지 적용합니다.'}
    else{if(!init){start.value=start.value||dd[0];end.value=end.value||dd[6]}hint.textContent=val==='repeat'?'기간 내 반복 일정으로 주간 표에 표시됩니다.':'원하는 시작일과 종료일을 지정하세요.'}
-   f.elements.namedItem('mode').value=val==='repeat'?'repeat':val==='custom'?'range':'single';
+   f.elements.namedItem('mode').value=val==='repeat'?'repeat':val==='custom'?(init&&t&&base.mode==='single'?'single':'range'):'single';
   };scheduleSelect.onchange=()=>scheduleChange();scheduleChange(true);
   const planInput=f.elements.namedItem('plan_id'),priority=f.elements.namedItem('priority'),planHint=root.querySelector('#planHint'),managePlan=root.querySelector('#managePlan');
   const updatePlanLink=()=>{const linked=state.plans.find(p=>p.id===planInput.value);managePlan.hidden=!linked||!!linked.deleted_at;
