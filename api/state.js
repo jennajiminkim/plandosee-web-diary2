@@ -1,10 +1,22 @@
-// Task 7: SAFE LOCKDOWN until authenticated, tenant-scoped Neon CRUD is complete.
-// The Task 6 API read all users' data using an elevated Supabase key.
-// Returning 401 for every method prevents accidental exposure from this route.
-// Once session validation and per-owner RLS transactions are implemented, replace
-// this file with real authorization-aware handlers and add adversarial tests.
-export default function handler(req, res) {
-  res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  return res.status(401).json({ error: 'authentication_required', detail: '개인 기록 API는 인증 기능 검증 후 이용할 수 있습니다.' });
+import {requireUser,asUser,tables} from './db.js';
+export default async function handler(req,res) {
+ res.setHeader('Cache-Control','no-store');
+ res.setHeader('Content-Type','application/json; charset=utf-8');
+ try {
+   const uid=await requireUser(req);
+   if(req.method!=='GET') return res.status(405).json({error:'writes_not_enabled'});
+   const result=await asUser(uid,async client=>{
+     const state={};
+     for(const [key,table] of Object.entries(tables)) {
+       const rows=await client.query('SELECT * FROM public.'+table+' LIMIT 3000');
+       state[key]=rows.rows;
+     }
+     return state;
+   });
+   return res.status(200).json(result);
+ } catch(err) {
+   if(err.status)return res.status(err.status).json({error:err.message});
+   console.error('Private diary read failed',err.code||'unknown');
+   return res.status(503).json({error:'data_unavailable'});
+ }
 }
