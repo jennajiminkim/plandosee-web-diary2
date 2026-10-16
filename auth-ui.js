@@ -6,7 +6,7 @@ const submit = root.querySelector('button[type=submit]');
 const modeButton = root.querySelector('[data-toggle]');
 let mode='login';
 function message(s){ notice.textContent=s; }
-function render(){heading.textContent=mode==='login'?'다시 만나 반가워요.':'작은 시작을 함께해요.';submit.textContent=mode==='login'?'로그인':'회원가입';modeButton.textContent=mode==='login'?'처음 오셨나요? 회원가입':'이미 계정이 있나요? 로그인';form.elements.name.parentElement.hidden=mode==='login';message('');}
+function render(){heading.textContent=mode==='login'?'다시 만나 반가워요.':'작은 시작을 함께해요.';submit.textContent=mode==='login'?'로그인':'회원가입';modeButton.textContent=mode==='login'?'처음 오셨나요? 회원가입':'이미 계정이 있나요? 로그인';form.elements.name.parentElement.hidden=mode==='login';form.elements.name.required=mode==='signup';message('');}
 modeButton.addEventListener('click',()=>{mode=mode==='login'?'signup':'login';render();});
 form.addEventListener('submit',async(e)=>{
  e.preventDefault();submit.disabled=true;message('확인 중...');
