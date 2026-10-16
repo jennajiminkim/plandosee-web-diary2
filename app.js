@@ -84,9 +84,41 @@ $('navPlanner').onclick=showPlanner;$('navArchive').onclick=showArchive;
 $('archivePrev').onclick=()=>{const [y,m]=archiveMonth.split('-').map(Number);archiveMonth=iso(new Date(y,m-2,1)).slice(0,7);renderArchive()};
 $('archiveNext').onclick=()=>{const [y,m]=archiveMonth.split('-').map(Number);archiveMonth=iso(new Date(y,m,1)).slice(0,7);renderArchive()};
 
-function exportAll(){const payload={app:'plan.do.see',exported_at:new Date().toISOString(),timezone_for_overdue:'Asia/Seoul',...state};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`plan-do-see-${todaySeoul()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),500)}
+async function exportAll(){
+ try{
+  const response=await fetch('/api/export',{credentials:'same-origin',cache:'no-store'});
+  if(!response.ok)throw Error((await response.json().catch(()=>({}))).error||'백업을 가져오지 못했습니다.');
+  const blob=await response.blob();
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='plan-do-see-private-'+todaySeoul()+'.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  toast('내 계정의 데이터 백업이 생성되었습니다.');
+ }catch(e){toast('내보내기 실패: '+e.message)}
+}
+function importPreview(){
+ const chooser=document.createElement('input');
+ chooser.type='file';chooser.accept='.json,application/json';
+ chooser.onchange=async()=>{
+  const file=chooser.files?.[0];if(!file)return;
+  if(file.size>700000){toast('파일이 너무 큽니다. 700KB 이하만 검사할 수 있습니다.');return}
+  try{
+   const data=JSON.parse(await file.text());
+   const result=await fetch('/api/import-preview',{method:'POST',credentials:'same-origin',cache:'no-store',
+     headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+   const body=await result.json();
+   if(!result.ok)throw Error(body.error||'파일 검사 실패');
+   const details=Object.entries(body.counts).map(([k,v])=>k+': '+v+'건').join(' · ');
+   drawer('기존 기록 가져오기 — 미리보기',
+     '<div class="panel"><strong>'+esc(body.valid?'구조 검사 완료':'구조 검사에서 문제 발견')+'</strong>'+
+     '<p>총 '+Number(body.total_records)+'건 · '+esc(details)+'</p>'+
+     '<p>이 화면은 파일만 검사합니다. 기존 기록은 변경되지 않습니다.</p></div>'+
+     (body.issues.length?'<div class="panel"><strong>확인해야 할 내용</strong><ul>'+body.issues.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'<p class="help">기본 구조와 연결 ID 검사에 문제가 없습니다. 실제 데이터 가져오기는 아직 잠겨 있습니다.</p>'));
+  }catch(e){toast('가져오기 미리보기 실패: '+e.message)}
+ };
+ chooser.click();
+}
 function goWeek(nextWeek){week=nextWeek;selectedPlan=activePlans().find(p=>p.start_date<=days()[6]&&p.end_date>=days()[0])?.id||'';activeEvidence='';render()}
-$('prev').onclick=()=>goWeek(addDays(week,-7));$('next').onclick=()=>goWeek(addDays(week,7));$('today').onclick=()=>goWeek(weekStart(new Date(todaySeoul()+'T12:00:00')));$('search').oninput=render;['filterStatus','filterTag','sort'].forEach(id=>$(id).onchange=render);$('planSelect').onchange=e=>{selectedPlan=e.target.value;activeEvidence='';renderSummary()};$('addTask').onclick=()=>openTask();$('addPlan').onclick=()=>openPlan();$('addPlanTop').onclick=()=>openPlan();$('export').onclick=exportAll;$('exportTop').onclick=exportAll;$('shade').onclick=closeDrawer;$('closeDrawer').onclick=closeDrawer;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('overlay').hidden)closeDrawer()});$('toggleReflection').onclick=()=>{const panel=$('reflectionContent');panel.hidden=!panel.hidden;$('toggleReflection').textContent=panel.hidden?'펼치기 ⌄':'접기 ⌃';$('toggleReflection').setAttribute('aria-expanded',String(!panel.hidden))};document.querySelectorAll('[data-group]').forEach(b=>b.onclick=()=>{activeEvidence=activeEvidence===b.dataset.group?'':b.dataset.group;renderSummary()});$('switchQuestion').onclick=()=>{questionIndex=(questionIndex+1)%questions.length;$('question').textContent=questions[questionIndex]};$('timeDetails').onclick=()=>{const ts=planTasks(selectedPlan);drawer('시간 기록 상세',`<div class="panel"><h3>예상 시간은 할 일별 저장값을 단순 합산합니다.</h3><p>실제 시간은 실행 기록의 소요 시간을 합산합니다.</p></div>${ts.map(t=>`<div class="log-item"><strong>${esc(t.title)}</strong><p>예상 ${formatMinutes(t.estimated_minutes)} · 실제 ${formatMinutes(taskLogs(t.id).reduce((sum,l)=>sum+l.actual_minutes,0))}</p><button class="link-btn" data-id="${t.id}">상세 보기 →</button></div>`).join('')||'기록이 없습니다.'}`,root=>root.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>openTask(state.tasks.find(t=>t.id===b.dataset.id))))};$('saveReflection').onclick=async()=>{
+$('prev').onclick=()=>goWeek(addDays(week,-7));$('next').onclick=()=>goWeek(addDays(week,7));$('today').onclick=()=>goWeek(weekStart(new Date(todaySeoul()+'T12:00:00')));$('search').oninput=render;['filterStatus','filterTag','sort'].forEach(id=>$(id).onchange=render);$('planSelect').onchange=e=>{selectedPlan=e.target.value;activeEvidence='';renderSummary()};$('addTask').onclick=()=>openTask();$('addPlan').onclick=()=>openPlan();$('addPlanTop').onclick=()=>openPlan();$('export').onclick=exportAll;$('exportTop').onclick=exportAll;const importButton=document.getElementById('importPreview');if(importButton)importButton.onclick=importPreview;$('shade').onclick=closeDrawer;$('closeDrawer').onclick=closeDrawer;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('overlay').hidden)closeDrawer()});$('toggleReflection').onclick=()=>{const panel=$('reflectionContent');panel.hidden=!panel.hidden;$('toggleReflection').textContent=panel.hidden?'펼치기 ⌄':'접기 ⌃';$('toggleReflection').setAttribute('aria-expanded',String(!panel.hidden))};document.querySelectorAll('[data-group]').forEach(b=>b.onclick=()=>{activeEvidence=activeEvidence===b.dataset.group?'':b.dataset.group;renderSummary()});$('switchQuestion').onclick=()=>{questionIndex=(questionIndex+1)%questions.length;$('question').textContent=questions[questionIndex]};$('timeDetails').onclick=()=>{const ts=planTasks(selectedPlan);drawer('시간 기록 상세',`<div class="panel"><h3>예상 시간은 할 일별 저장값을 단순 합산합니다.</h3><p>실제 시간은 실행 기록의 소요 시간을 합산합니다.</p></div>${ts.map(t=>`<div class="log-item"><strong>${esc(t.title)}</strong><p>예상 ${formatMinutes(t.estimated_minutes)} · 실제 ${formatMinutes(taskLogs(t.id).reduce((sum,l)=>sum+l.actual_minutes,0))}</p><button class="link-btn" data-id="${t.id}">상세 보기 →</button></div>`).join('')||'기록이 없습니다.'}`,root=>root.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>openTask(state.tasks.find(t=>t.id===b.dataset.id))))};$('saveReflection').onclick=async()=>{
  const answer=$('answer').value.trim(),next=$('improvement').value.trim();
  if(!answer&&!next){toast('한 문장만 작성해도 좋아요.');return}
  const current=weeklyJournal();const btn=$('saveReflection');btn.disabled=true;btn.textContent='저장 중...';
