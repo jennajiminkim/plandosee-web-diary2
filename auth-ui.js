@@ -13,6 +13,14 @@ let plannerBooted=false;
 function unlockPlanner(){
  if(!currentUser || plannerBooted)return;
  plannerBooted=true;
+ const noticeBar=document.querySelector('.notice');
+ if(noticeBar && !document.getElementById('plannerLogout')){
+  const button=document.createElement('button');
+  button.id='plannerLogout';button.type='button';button.textContent='로그아웃';
+  button.className='light';button.style.marginLeft='auto';
+  button.addEventListener('click',()=>logout.click());
+  noticeBar.appendChild(button);
+ }
  document.body.classList.remove('auth-locked');
  root.hidden=true;
  const script=document.createElement('script');
