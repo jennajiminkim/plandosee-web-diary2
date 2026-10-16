@@ -1,3 +1,4 @@
+import { handleAuthRequest, handleAuthResponse } from '@neondatabase/auth/server';
 // Task 7 authentication boundary: same-origin proxy to managed Neon Auth (Better Auth).
 // The browser never receives a Neon database connection string or server secret.
 // IMPORTANT: this auth gateway does not by itself unlock the diary data API.
@@ -38,19 +39,20 @@ export async function neonAuth(req, action, body) {
   const origin = originOf(req);
   if (!origin) throw Object.assign(new Error('invalid_origin'), { status: 400 });
   const spec = endpoints[action];
-  const response = await fetch(endpoint.origin + endpoint.pathname.replace(/\/$/, '') + spec.path, {
-    method: spec.method,
-    redirect: 'manual',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      Origin: origin,
-      Cookie: req.headers.cookie || ''
-    },
-    body: spec.method === 'POST' ? JSON.stringify(body || {}) : undefined,
-    signal: AbortSignal.timeout(8000)
+  const headers=new Headers({
+    'Accept':'application/json',
+    'Content-Type':'application/json',
+    'Origin':origin,
+    'Cookie':req.headers.cookie||''
   });
-  return response;
+  const request=new Request(origin+'/api/auth/'+action,{
+    method:spec.method,headers,
+    body:spec.method==='POST'?JSON.stringify(body||{}):undefined
+  });
+  // Neon official proxy sends mandatory auth proxy headers and normalizes cookies.
+  const upstream=await handleAuthRequest(base,request,spec.path.slice(1));
+  return handleAuthResponse(upstream,base,{secret:process.env.NEON_AUTH_COOKIE_SECRET,sameSite:'lax'});
+
 }
 
 export function forwardCookies(res, upstream) {
