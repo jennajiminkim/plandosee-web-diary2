@@ -105,7 +105,7 @@ function openTask(t=null){
 function localDatetime(date=new Date()){const d=new Date(date.getTime()-date.getTimezoneOffset()*60000);return d.toISOString().slice(0,16)}
 function localLogDatetime(value){return localDatetime(new Date(value))}
 function openCell(t,day){
- const c=cell(t.id,day),logs=taskLogs(t.id).filter(l=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(l.started_at))===day).sort((a,b)=>b.started_at.localeCompare(a.started_at));
+ const c=cell(t.id,day),logs=taskLogs(t.id).filter(l=>(()=>{const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(l.started_at));const d=Object.fromEntries(parts.map(p=>[p.type,p.value]));return `${d.year}-${d.month}-${d.day}`===day})()).sort((a,b)=>b.started_at.localeCompare(a.started_at));
  const defaultTime=day+'T';
  drawer(day+' · '+t.title,`<form id="cellForm">
  ${t.first_step?.trim()?`<section class="first-step-view"><span class="drawer-kicker">↗ MY FIRST STEP</span><p>${esc(t.first_step)}</p><small>할 일 상세에서 수정할 수 있어요.</small></section>`:''}
