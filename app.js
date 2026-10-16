@@ -106,7 +106,6 @@ function localDatetime(date=new Date()){const d=new Date(date.getTime()-date.get
 function localLogDatetime(value){return localDatetime(new Date(value))}
 function openCell(t,day){
  const c=cell(t.id,day),logs=taskLogs(t.id).filter(l=>(()=>{const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(l.started_at));const d=Object.fromEntries(parts.map(p=>[p.type,p.value]));return `${d.year}-${d.month}-${d.day}`===day})()).sort((a,b)=>b.started_at.localeCompare(a.started_at));
- const defaultTime=day+'T';
  drawer(day+' · '+t.title,`<form id="cellForm">
  ${t.first_step?.trim()?`<section class="first-step-view"><span class="drawer-kicker">↗ MY FIRST STEP</span><p>${esc(t.first_step)}</p><small>할 일 상세에서 수정할 수 있어요.</small></section>`:''}
  <label for="f-state">오늘의 진행 상태</label>${selectField('','state',[['planned','○ 예정'],['progress','◐ 진행 중'],['done','✓ 그날 수행 완료']],c?.state||'planned')}
@@ -114,8 +113,8 @@ function openCell(t,day){
  <p class="help">주간 체크표에 표시되는 기록입니다.</p>
  <div class="drawer-section-label">실행 시간 <small>선택 · 기록하지 않아도 저장 가능</small></div>
  <div class="field"><label for="logSelect">실행 기록 선택</label><select id="logSelect"><option value="">새 실행 기록 추가 / 시간 없음</option>${logs.map(l=>`<option value="${esc(l.id)}">${esc(new Date(l.started_at).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}))} · ${l.actual_minutes}분</option>`).join('')}</select></div>
- <div class="two">${formField('시작 시각','started_at','','datetime-local')}${formField('종료 시각','ended_at','','datetime-local')}</div>
- <p class="help">시간은 선택사항입니다. 과거 기록은 위에서 선택해 수정하며 중복 저장하지 않습니다.</p>
+ <div class="two">${formField('시작 시각','started_at','','time')}${formField('종료 시각','ended_at','','time')}</div>
+ <p class="help">선택한 날짜가 자동 적용됩니다. 종료 시각이 시작보다 빠르면 다음날 종료로 기록합니다. 과거 기록은 위에서 선택해 수정할 수 있어요.</p>
  <div class="field"><label for="f-blocker">막힌 이유 (선택)</label><textarea id="f-blocker" name="blocker" rows="2" placeholder="어려웠던 점이 있다면 적어주세요.">${esc(c?.blocker||'')}</textarea></div>
  <div class="field"><label for="f-note">추가 메모 (선택)</label><textarea id="f-note" name="note" rows="2" placeholder="남겨두고 싶은 내용">${esc(c?.note||'')}</textarea></div>
  <div class="buttons"><button class="primary" type="submit">기록 저장</button><button class="light" type="button" id="taskOpen">할 일 상세 ↗</button></div>
@@ -123,13 +122,13 @@ function openCell(t,day){
  ${logs.length?`<div class="panel"><strong>이 날짜의 실행 기록 ${logs.length}건</strong>${logs.map(l=>`<p class="log-item">${esc(new Date(l.started_at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}))} · ${l.actual_minutes}분<br>${esc(l.progress||'')}${l.blocker?' · 막힘: '+esc(l.blocker):''}</p>`).join('')}</div>`:''}`,root=>{
  const f=root.querySelector('#cellForm'),selector=root.querySelector('#logSelect');
  root.querySelector('#taskOpen').onclick=()=>openTask(state.tasks.find(x=>x.id===t.id)||t);
- const restoreLog=()=>{const l=logs.find(x=>x.id===selector.value);f.elements.namedItem('started_at').value=l?localLogDatetime(l.started_at):'';
-   f.elements.namedItem('ended_at').value=l?localLogDatetime(l.ended_at):'';
+ const restoreLog=()=>{const l=logs.find(x=>x.id===selector.value);f.elements.namedItem('started_at').value=l?localLogDatetime(l.started_at).slice(11,16):'';
+   f.elements.namedItem('ended_at').value=l?localLogDatetime(l.ended_at).slice(11,16):'';
    f.elements.namedItem('blocker').value=l?l.blocker||'':c?.blocker||''};
  selector.onchange=restoreLog;
  f.onsubmit=async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(f));const a=data.started_at,b=data.ended_at;
    if((a&&!b)||(!a&&b)){toast('시간은 시작과 종료를 모두 입력해 주세요.');return}
-   if(a&&b){const start=new Date(a),end=new Date(b);if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<start||end-start>86400000){toast('실행 시간을 확인하세요. 최대 24시간까지 기록할 수 있어요.');return}
+   if(a&&b){const start=new Date(day+'T'+a),end=new Date(day+'T'+b);if(end<start)end.setDate(end.getDate()+1);if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end-start>86400000){toast('실행 시간을 확인하세요. 최대 24시간까지 기록할 수 있어요.');return}
     data.started_at=start.toISOString();data.ended_at=end.toISOString();
    }
    const v=await run('cell.record',{...data,task_id:t.id,day,log_id:selector.value||null});if(v)closeDrawer();
