@@ -17,6 +17,13 @@ function show(s){
  if(!s.experiment)return;
  const n=s.records.length, revised=Boolean(s.change);
  const e=s.experiment;
+ const firstStep=e.metric_name==='하루에 첫 행동을 실행한 할 일 수'&&e.metric_unit==='건';
+ const metricInput=$('record').elements.namedItem('metric_value');
+ metricInput.max=firstStep?'3':'100000000';
+ metricInput.step=firstStep?'1':'0.0001';
+ $('record').elements.namedItem('note').placeholder=firstStep?
+  '오늘 선정한 최대 3개 할 일과 실제로 첫 행동을 실행한 할 일, 시작에 도움이 된 점 또는 어려웠던 이유를 기록해 주세요.':
+  '오늘 어떤 활동을 했고 어떻게 측정했는지 기록해 주세요.';
  $('summary').innerHTML='<strong>'+escape(e.question)+'</strong><p>지표: '+escape(e.metric_name)+' ('+escape(e.metric_unit)+')</p><p>계산 방식: '+escape(e.calculation_rule)+'</p><p>진행: '+n+'/5일 · 규칙 변경: '+(revised?'완료':'대기')+'</p>';
  $('record').hidden=n>=5||(n>=2&&!revised)||s.records.some(r=>r.record_date===s.today);
  $('revision').hidden=n!==2||revised;
