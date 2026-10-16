@@ -198,3 +198,21 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 .journal-theme{border:1px solid #CAD5EA;border-radius:6px;padding:10px 13px;font-size:12px}
 .reflection-field>label,.reflection-field .fieldtop>label{font-size:17px;font-weight:650;color:#24385c}
 @media(max-width:750px){.journal-card{grid-template-columns:1fr;gap:12px;padding:17px}.journal-date{align-items:flex-start;padding:0}.journal-date strong{font-size:78px}.journal-body{gap:16px}.journal-lines{--journal-row-height:36px;font-size:14px}.page-tabs button{padding:10px 12px}.archive-nav{gap:6px}.archive-nav button{padding:3px 8px}}
+
+/* T07 lock screen: the old planner is hidden until authenticated storage is ready. */
+.auth-locked .shell{display:none}
+.auth-gate{min-height:100vh;display:grid;place-items:center;padding:24px;background:#f7f9ff}
+.auth-panel{width:min(460px,100%);background:white;border:1px solid #d8e3f3;border-radius:16px;padding:40px;box-shadow:0 15px 50px #1f438018}
+.auth-brand{font:28px Georgia,serif;color:#173b8f;margin-bottom:30px}
+.auth-brand i{display:block;font-size:14px;color:#7085ab;margin-top:6px}
+.auth-panel h1{font:700 24px/1.35 -apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif;letter-spacing:-.03em;color:#203b68}
+.auth-panel p{color:#687c98;font-size:14px}
+.auth-panel form{display:grid;gap:16px;margin-top:25px}
+.auth-panel label{display:grid;gap:7px;font-size:13px;font-weight:600;color:#29426d}
+.auth-panel label[hidden]{display:none}
+.auth-panel input{width:100%;border:1px solid #cfdaec;border-radius:8px;padding:12px;background:white;color:#1b2a45}
+.auth-panel button[type=submit]{background:#204ba8;color:white;border:0;padding:13px;border-radius:8px;font-weight:700;margin-top:8px}
+.auth-panel button:disabled{opacity:.6}
+.auth-panel .auth-toggle{background:none;border:0;color:#315cad;padding:12px 0}
+.auth-panel [data-message]{min-height:1.4em;white-space:pre-line}
+.auth-panel small{display:block;color:#798ca6;font-size:11px;margin-top:22px}
