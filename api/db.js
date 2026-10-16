@@ -1,7 +1,9 @@
 import pg from 'pg';
 import { neonAuth, sessionInfo } from './auth.js';
 
-const { Client } = pg;
+const { Pool } = pg;
+// Serverless instance-local pool: reuses TLS connections across warm invocations.
+const pool = new Pool({connectionString:process.env.DATABASE_URL, max:3, idleTimeoutMillis:15000, connectionTimeoutMillis:6000, query_timeout:10000, statement_timeout:10000, ssl:{rejectUnauthorized:true}});
 // Preserve PostgreSQL DATE values as YYYY-MM-DD for the Task 6 calendar UI.
 pg.types.setTypeParser(1082, 'text', value => value);
 export const tables = {
@@ -22,10 +24,7 @@ export async function requireUser(req) {
 }
 export async function asUser(userId,callback) {
   if(!process.env.DATABASE_URL) throw error('database_not_configured',503);
-  const client=new Client({connectionString:process.env.DATABASE_URL,
-    connectionTimeoutMillis:6000,query_timeout:10000,statement_timeout:10000,
-    ssl:{rejectUnauthorized:true}});
-  await client.connect();
+  const client=await pool.connect();
   try {
     await client.query('BEGIN');
     // Connection role can be Neon owner, but EVERY data query is executed under
@@ -39,7 +38,7 @@ export async function asUser(userId,callback) {
     await client.query('ROLLBACK').catch(()=>{});
     throw e;
   } finally {
-    await client.end();
+    client.release();
   }
 }
 export const validId=x=>typeof x==='string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x);
