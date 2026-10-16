@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check app.js && node --check api/state.js && node --check api/health.js && node --test tests/*.test.mjs",
+    "check": "node --check app.js && node --check auth-ui.js && node --check api/auth.js && node --check api/db.js && node --check api/state.js && node --check api/health.js && node --test tests/*.test.mjs",
     "test": "node --test tests/*.test.mjs",
     "dev": "vercel dev"
   },
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.0",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "@neondatabase/auth": "0.6.0-beta"
   }
 }
