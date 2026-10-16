@@ -9,8 +9,8 @@ const tables={plans:'pds_plans',versions:'pds_plan_versions',tasks:'pds_tasks',
 const fields={
  plans:['title','start_date','end_date','priority','success_criteria','estimated_minutes','deleted_at','created_at','updated_at'],
  versions:['snapshot','changed_at'],
- tasks:['title','priority','tag','color','due_date','start_date','end_date','mode','estimated_minutes','estimate_basis','status','completed_at','deleted_at','created_at'],
- cells:['day','state','progress','note'],
+ tasks:['title','first_step','priority','tag','color','due_date','start_date','end_date','mode','estimated_minutes','estimate_basis','status','completed_at','deleted_at','created_at'],
+ cells:['day','state','progress','note','blocker'],
  logs:['started_at','ended_at','actual_minutes','progress','blocker','created_at'],
  completions:['completed_at'],
  reflections:['question','answer','improvement','updated_at'],
@@ -19,8 +19,8 @@ const fields={
 };
 const defaults={
  plans:{priority:1,success_criteria:'',estimated_minutes:0},
- tasks:{priority:1,tag:'생활',color:'#dce9dc',mode:'single',status:'active',estimate_basis:'total',estimated_minutes:0},
- cells:{state:'planned',progress:'',note:''},logs:{progress:'',blocker:''},
+ tasks:{first_step:'',priority:1,tag:'생활',color:'#dce9dc',mode:'single',status:'active',estimate_basis:'total',estimated_minutes:0},
+ cells:{state:'planned',progress:'',note:'',blocker:''},logs:{progress:'',blocker:''},
  reflections:{question:'',answer:'',improvement:''},
  journals:{question:'',discovery:'',next_action:'',bg_color:'#FAFAFA',date_color:'#1E4099'},
  colors:{usage_count:1}
