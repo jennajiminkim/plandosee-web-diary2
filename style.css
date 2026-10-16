@@ -275,3 +275,25 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 #taskForm .help,#cellForm .help{line-height:1.6}
 #taskForm select,#cellForm select{max-width:100%}
 @media(max-width:520px){#taskForm .two,#cellForm .two{grid-template-columns:1fr 1fr;gap:9px}.first-step-box{padding:13px}}
+
+/* Task 7 readability: plan-entry labels match the 15px field text. */
+.drawer #taskForm .field > label,
+.drawer #taskForm .first-step-box > label {
+  font-size:15px;
+  font-weight:650;
+  line-height:1.5;
+}
+.drawer #taskForm .first-step-label {
+  font-size:15px;
+  font-weight:750;
+  letter-spacing:.025em;
+}
+.drawer #taskForm .first-step-label small {
+  font-size:12px;
+  font-weight:500;
+}
+.drawer #taskForm .drawer-section-label {
+  font-size:13px;
+}
+/* Priority numbers are informational; open task details from the task title. */
+.weekly td.rank .priority-badge {cursor:default}
