@@ -250,3 +250,9 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 .auth-loading-content em{display:block;color:#8799b9;font:italic 15px Georgia,serif;margin-top:5px}
 .auth-loading-content p{font-size:13px;margin-top:32px;color:#7084a4}
 .auth-ready .auth-loading{display:none!important}
+
+/* Keep the planner private and invisible until state has finished rendering. */
+.planner-pending .shell{display:none!important}
+.planner-pending #authGate{display:none!important}
+.planner-pending .auth-loading{display:grid!important}
+.planner-loaded .auth-loading{display:none!important}
