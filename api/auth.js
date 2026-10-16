@@ -57,7 +57,7 @@ export function forwardCookies(res, upstream) {
   const raw = upstream.headers.getSetCookie?.() || [];
   const safe = raw
     .filter(v => /^[A-Za-z0-9_.-]+=[^;\r\n]*/.test(v))
-    .map(v => v.split(';').filter(part => !/^\s*domain=/i.test(part)).join(';'));
+    .map(v => v.split(';').filter(part => !/^\s*(domain|path)=/i.test(part)).join(';') + '; Path=/; Secure; HttpOnly; SameSite=Lax');
   if (safe.length) res.setHeader('Set-Cookie', safe);
 }
 
