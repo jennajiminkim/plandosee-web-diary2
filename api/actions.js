@@ -56,7 +56,7 @@ async function fieldsForTask(db,uid,data,prior) {
  const start=date(data.start_date),end=date(data.end_date);
  if(start&&end&&end<start)throw error('할 일 기간을 확인하세요.');
  return {
-  plan_id:pid,title:mandatory(data.title,'할 일 이름'),priority,
+  plan_id:pid,title:mandatory(data.title,'할 일 이름'),first_step:text(data.first_step,300).trim(),priority,
   tag:tags.has(data.tag)?data.tag:'기타',color:color(data.color),
   due_date:date(data.due_date),start_date:start,end_date:end,
   mode:['single','range','repeat'].includes(data.mode)?data.mode:'single',
@@ -127,6 +127,33 @@ export async function perform(db,uid,action,data) {
    'INSERT INTO public.pds_cells(user_id,task_id,day,state,progress,note) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(user_id,task_id,day) DO UPDATE SET state=excluded.state,progress=excluded.progress,note=excluded.note RETURNING *',
    [uid,task.id,data.day,fields.state,fields.progress,fields.note]);
   return result.rows[0];
+ case 'cell.record':
+  // One request/transaction saves the daily cell and optional timed record.
+  // Existing logs are never replaced implicitly; explicit log_id updates only.
+  if(!date(data.day))throw error('날짜를 확인하세요.');
+  task=await activeTask(db,uuid(data.task_id,'할 일 ID'),uid);
+  fields={state:['planned','progress','done'].includes(data.state)?data.state:'planned',
+   progress:text(data.progress,90),note:text(data.note,1000),blocker:text(data.blocker,1000)};
+  result=await db.query(
+   'INSERT INTO public.pds_cells(user_id,task_id,day,state,progress,note,blocker) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(user_id,task_id,day) DO UPDATE SET state=excluded.state,progress=excluded.progress,note=excluded.note,blocker=excluded.blocker RETURNING *',
+   [uid,task.id,data.day,fields.state,fields.progress,fields.note,fields.blocker]);
+  const hasStart=!!data.started_at,hasEnd=!!data.ended_at;
+  if(hasStart!==hasEnd)throw error('실행 시각은 시작과 종료를 모두 입력하세요.');
+  let log=null;
+  if(hasStart){
+   const begin=stamp(data.started_at),finish=stamp(data.ended_at);
+   const minutes=Math.round((Date.parse(finish)-Date.parse(begin))/60000);
+   if(minutes<0||minutes>1440)throw error('실행 시간은 0~1440분이어야 합니다.');
+   const values={started_at:begin,ended_at:finish,actual_minutes:minutes,progress:text(data.progress,200),blocker:fields.blocker};
+   if(data.log_id){
+    const old=await own(db,'pds_logs',uuid(data.log_id,'실행 기록 ID'),uid,{lock:true});
+    if(old.task_id!==task.id)throw error('not_found',404);
+    log=await patch(db,'pds_logs',old.id,uid,values);
+   }else{
+    log=await add(db,'pds_logs',{user_id:uid,task_id:task.id,...values});
+   }
+  }else if(data.log_id)throw error('기존 실행 기록 수정 시에는 시작과 종료 시각이 필요합니다.');
+  return {cell:result.rows[0],log};
  case 'log.create':
   task=await activeTask(db,uuid(data.task_id,'할 일 ID'),uid);
   span={start:stamp(data.started_at),end:stamp(data.ended_at)};
