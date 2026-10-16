@@ -65,6 +65,14 @@ export function forwardCookies(res, upstream) {
   if(safe.length)res.setHeader('Set-Cookie',safe);
 }
 
+// Names only. Never log or return cookie contents, session tokens, or signatures.
+function cookieNames(header) {
+  return String(header||'').split(';').map(part=>part.trim().split('=')[0])
+    .filter(name=>/^[A-Za-z0-9_.-]{1,80}$/.test(name));
+}
+function authCookieNames(names) {
+  return names.filter(name=>/(auth|session|token)/i.test(name)).slice(0,6);
+}
 async function responseJSON(response) {
   try { return await response.json(); } catch { return null; }
 }
@@ -105,6 +113,7 @@ export default async function handler(req, res) {
         : { email: body.email.trim(), password: body.password };
     }
     const upstream = await neonAuth(req, action, body);
+    const issued = upstream.headers.getSetCookie?.() || [];
     forwardCookies(res, upstream);
     const payload = await responseJSON(upstream);
     if (!upstream.ok) {
@@ -120,12 +129,22 @@ export default async function handler(req, res) {
         const cookieHeader = req.headers.cookie || '';
         info.diagnostic = {
           request_has_cookies: cookieHeader.length > 0,
-          request_has_session_cookie: /(?:^|;\s*)[^=;\s]*session_token=/.test(cookieHeader)
+          request_has_session_cookie: /(?:^|;\s*)[^=;\s]*session_token=/.test(cookieHeader),
+          cookie_names: authCookieNames(cookieNames(cookieHeader)),
+          cookie_count: cookieNames(cookieHeader).length
         };
       }
       return res.status(200).json(info);
     }
-    return res.status(200).json({ ok: true });
+    return res.status(200).json({
+      ok: true,
+      ...(action === 'login' || action === 'signup' ? {
+        diagnostic: {
+          upstream_set_cookie_count: issued.length,
+          upstream_auth_cookie_names: authCookieNames(issued.map(item=>item.split('=')[0].trim()))
+        }
+      } : {})
+    });
   } catch (e) {
     if (e?.status) return res.status(e.status).json({ error: e.message });
     // Do not print request bodies, credentials, cookies, or upstream response payloads.
