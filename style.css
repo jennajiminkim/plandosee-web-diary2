@@ -241,3 +241,12 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 #authGate[hidden]{display:none!important}
 .auth-locked .shell{display:none!important}
 .notice #plannerLogout{width:auto;min-width:80px;flex-shrink:0;font-weight:650}
+
+/* Task 7 initial session check: never flash sign-in before authenticated planner. */
+.auth-pending #authGate,.auth-pending .shell{display:none!important}
+.auth-loading{display:none;min-height:100vh;place-items:center;background:#f8faff;color:#1e4099;padding:30px;text-align:center}
+.auth-pending .auth-loading{display:grid}
+.auth-loading-content strong{display:block;font:30px Georgia,serif;letter-spacing:-.045em}
+.auth-loading-content em{display:block;color:#8799b9;font:italic 15px Georgia,serif;margin-top:5px}
+.auth-loading-content p{font-size:13px;margin-top:32px;color:#7084a4}
+.auth-ready .auth-loading{display:none!important}
