@@ -2,6 +2,8 @@ import pg from 'pg';
 import { neonAuth, sessionInfo } from './auth.js';
 
 const { Client } = pg;
+// Preserve PostgreSQL DATE values as YYYY-MM-DD for the Task 6 calendar UI.
+pg.types.setTypeParser(1082, 'text', value => value);
 export const tables = {
   plans:'pds_plans', versions:'pds_plan_versions', tasks:'pds_tasks', cells:'pds_cells',
   logs:'pds_logs', completions:'pds_completion_events', reflections:'pds_reflections',
