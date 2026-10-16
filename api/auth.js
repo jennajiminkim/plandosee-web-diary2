@@ -108,7 +108,19 @@ export default async function handler(req, res) {
       if (action === 'signup') return res.status(400).json({ error: '가입을 완료할 수 없습니다. 이메일과 입력 정보를 확인해 주세요.' });
       return res.status(401).json({ error: 'not_authenticated' });
     }
-    if (action === 'session') return res.status(200).json(sessionInfo(payload));
+    if (action === 'session') {
+      const info = sessionInfo(payload);
+      // Diagnostic metadata contains no cookies, tokens, or personal information.
+      // Useful for distinguishing a browser cookie issue from a rejected session.
+      if (!info.authenticated) {
+        const cookieHeader = req.headers.cookie || '';
+        info.diagnostic = {
+          request_has_cookies: cookieHeader.length > 0,
+          request_has_session_cookie: /(?:^|;\s*)[^=;\s]*session_token=/.test(cookieHeader)
+        };
+      }
+      return res.status(200).json(info);
+    }
     return res.status(200).json({ ok: true });
   } catch (e) {
     if (e?.status) return res.status(e.status).json({ error: e.message });
