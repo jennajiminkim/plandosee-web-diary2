@@ -52,25 +52,25 @@ function openTask(t=null){
  const same=a=>base.start_date===a&&base.end_date===a;
  const schedule=t?(base.mode==='repeat'?'repeat':same(today)?'today':base.start_date===dd[0]&&base.end_date===dd[6]?'week':'custom'):'week';
  const options=[['','없음 · 자유로운 할 일'],...activePlans().map(p=>[p.id,p.title]),...(base.plan_id&&!activePlans().some(p=>p.id===base.plan_id)?[[base.plan_id,'삭제된 계획 · 이전 기록 연결']]:[])];
- drawer(t?'할 일 상세':'할 일 추가',\`<form id="taskForm">
+ drawer(t?'할 일 상세':'할 일 추가',`<form id="taskForm">
  <div class="drawer-kicker">PLAN · 시작하기 전에</div>
- \${formField('할 일 이름','title',base.title,'text','required maxlength="180"')}
- <section class="first-step-box"><div class="first-step-label">↗ MY FIRST STEP <small>선택</small></div><label for="f-first_step">2분 안에 할 수 있는 첫 번째 행동은?</label><input id="f-first_step" name="first_step" type="text" maxlength="300" value="\${esc(base.first_step||'')}" placeholder="예: 교재 펼치고 첫 번째 문제 읽기"><p class="help">완벽하게 끝낼 필요 없어요. 이 행동부터 가볍게 시작해 보세요.</p></section>
- <div class="field"><label for="scheduleType">언제 할까요?</label><select id="scheduleType"><option value="today" \${schedule==='today'?'selected':''}>오늘</option><option value="week" \${schedule==='week'?'selected':''}>이번 주 (현재 선택한 주)</option><option value="custom" \${schedule==='custom'?'selected':''}>날짜 직접 지정</option><option value="repeat" \${schedule==='repeat'?'selected':''}>반복 일정</option></select></div>
- <div class="two" id="scheduleDates">\${formField('시작일','start_date',base.start_date||dd[0],'date')}\${formField('종료일','end_date',base.end_date||dd[6],'date')}</div>
+ ${formField('할 일 이름','title',base.title,'text','required maxlength="180"')}
+ <section class="first-step-box"><div class="first-step-label">↗ MY FIRST STEP <small>선택</small></div><label for="f-first_step">2분 안에 할 수 있는 첫 번째 행동은?</label><input id="f-first_step" name="first_step" type="text" maxlength="300" value="${esc(base.first_step||'')}" placeholder="예: 교재 펼치고 첫 번째 문제 읽기"><p class="help">완벽하게 끝낼 필요 없어요. 이 행동부터 가볍게 시작해 보세요.</p></section>
+ <div class="field"><label for="scheduleType">언제 할까요?</label><select id="scheduleType"><option value="today" ${schedule==='today'?'selected':''}>오늘</option><option value="week" ${schedule==='week'?'selected':''}>이번 주 (현재 선택한 주)</option><option value="custom" ${schedule==='custom'?'selected':''}>날짜 직접 지정</option><option value="repeat" ${schedule==='repeat'?'selected':''}>반복 일정</option></select></div>
+ <div class="two" id="scheduleDates">${formField('시작일','start_date',base.start_date||dd[0],'date')}${formField('종료일','end_date',base.end_date||dd[6],'date')}</div>
  <p class="help" id="scheduleHint"></p>
- \${selectField('분류 / 테마','tag',Object.keys(tags).map(x=>[x,x]),base.tag)}
+ ${selectField('분류 / 테마','tag',Object.keys(tags).map(x=>[x,x]),base.tag)}
  <div class="drawer-section-label">OPTIONS · 계획 관리 <small>선택 항목</small></div>
- \${selectField('연결된 계획','plan_id',options,base.plan_id||'')}
+ ${selectField('연결된 계획','plan_id',options,base.plan_id||'')}
  <p class="help" id="planHint"></p><button type="button" class="link-btn" id="managePlan">↗ 계획 상세 및 수정 이력</button>
- <div class="two">\${formField('우선순위','priority',base.priority,'number','min="1" max="999" required')}\${formField('예상 시간 (분)','estimated_minutes',base.estimated_minutes,'number','min="0" max="100000"')}</div>
- \${selectField('시간 기준','estimate_basis',[['total','전체 예상'],['per_session','1회당 예상']],base.estimate_basis)}
- \${formField('마감일 (선택)','due_date',base.due_date||'','date')}
- <input type="hidden" name="mode" value="\${esc(base.mode)}">
- \${formField('표시 색상','color',base.color,'color')}
- <div class="field"><span class="palette-title">자주 쓰는 색상</span><div class="swatch-palette" id="colorPalette">\${swatches().map(c=>\`<button type="button" class="swatch" data-color="\${c}" style="background:\${c}" aria-label="색상 \${c} 선택" title="\${c}"></button>\`).join('')}</div></div>
- <div class="buttons"><button class="primary" type="submit">\${t?'변경 저장':'할 일 만들기'}</button>\${t?'<button class="light" type="button" id="doneAction"></button><button class="light" type="button" id="deleteAction">삭제</button>':''}</div>
- </form>\${t?\`<details><summary>기존 실행 기록 (\${taskLogs(t.id).length}건)</summary><div class="panel">\${taskLogs(t.id).map(l=>\`<div class="log-item"><strong>\${esc(new Date(l.started_at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}))}</strong> · \${l.actual_minutes}분 <p>\${esc(l.progress||'진행 메모 없음')}</p>\${l.blocker?\`<p>막힘: \${esc(l.blocker)}</p>\`:''}<button data-delete-log="\${l.id}" class="link-btn">이 기록 삭제</button></div>\`).join('')||'실행 기록이 없습니다.'}</div></details>\`:''}\`,root=>{
+ <div class="two">${formField('우선순위','priority',base.priority,'number','min="1" max="999" required')}${formField('예상 시간 (분)','estimated_minutes',base.estimated_minutes,'number','min="0" max="100000"')}</div>
+ ${selectField('시간 기준','estimate_basis',[['total','전체 예상'],['per_session','1회당 예상']],base.estimate_basis)}
+ ${formField('마감일 (선택)','due_date',base.due_date||'','date')}
+ <input type="hidden" name="mode" value="${esc(base.mode)}">
+ ${formField('표시 색상','color',base.color,'color')}
+ <div class="field"><span class="palette-title">자주 쓰는 색상</span><div class="swatch-palette" id="colorPalette">${swatches().map(c=>`<button type="button" class="swatch" data-color="${c}" style="background:${c}" aria-label="색상 ${c} 선택" title="${c}"></button>`).join('')}</div></div>
+ <div class="buttons"><button class="primary" type="submit">${t?'변경 저장':'할 일 만들기'}</button>${t?'<button class="light" type="button" id="doneAction"></button><button class="light" type="button" id="deleteAction">삭제</button>':''}</div>
+ </form>${t?`<details><summary>기존 실행 기록 (${taskLogs(t.id).length}건)</summary><div class="panel">${taskLogs(t.id).map(l=>`<div class="log-item"><strong>${esc(new Date(l.started_at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}))}</strong> · ${l.actual_minutes}분 <p>${esc(l.progress||'진행 메모 없음')}</p>${l.blocker?`<p>막힘: ${esc(l.blocker)}</p>`:''}<button data-delete-log="${l.id}" class="link-btn">이 기록 삭제</button></div>`).join('')||'실행 기록이 없습니다.'}</div></details>`:''}`,root=>{
   const f=root.querySelector('#taskForm'),scheduleSelect=root.querySelector('#scheduleType'),dateBlock=root.querySelector('#scheduleDates'),hint=root.querySelector('#scheduleHint');
   const scheduleChange=(init=false)=>{const val=scheduleSelect.value;dateBlock.hidden=val==='today'||val==='week';const start=f.elements.namedItem('start_date'),end=f.elements.namedItem('end_date');
    if(val==='today'){start.value=today;end.value=today;hint.textContent='오늘 하루로 설정됩니다.'}
@@ -107,20 +107,20 @@ function localLogDatetime(value){return localDatetime(new Date(value))}
 function openCell(t,day){
  const c=cell(t.id,day),logs=taskLogs(t.id).filter(l=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(l.started_at))===day).sort((a,b)=>b.started_at.localeCompare(a.started_at));
  const defaultTime=day+'T';
- drawer(day+' · '+t.title,\`<form id="cellForm">
- \${t.first_step?.trim()?\`<section class="first-step-view"><span class="drawer-kicker">↗ MY FIRST STEP</span><p>\${esc(t.first_step)}</p><small>할 일 상세에서 수정할 수 있어요.</small></section>\`:''}
- <label for="f-state">오늘의 진행 상태</label>\${selectField('','state',[['planned','○ 예정'],['progress','◐ 진행 중'],['done','✓ 그날 수행 완료']],c?.state||'planned')}
- \${formField('오늘 실제로 한 일','progress',c?.progress||'','text','maxlength="90" placeholder="짧은 한 문장으로 남겨보세요"')}
+ drawer(day+' · '+t.title,`<form id="cellForm">
+ ${t.first_step?.trim()?`<section class="first-step-view"><span class="drawer-kicker">↗ MY FIRST STEP</span><p>${esc(t.first_step)}</p><small>할 일 상세에서 수정할 수 있어요.</small></section>`:''}
+ <label for="f-state">오늘의 진행 상태</label>${selectField('','state',[['planned','○ 예정'],['progress','◐ 진행 중'],['done','✓ 그날 수행 완료']],c?.state||'planned')}
+ ${formField('오늘 실제로 한 일','progress',c?.progress||'','text','maxlength="90" placeholder="짧은 한 문장으로 남겨보세요"')}
  <p class="help">주간 체크표에 표시되는 기록입니다.</p>
  <div class="drawer-section-label">실행 시간 <small>선택 · 기록하지 않아도 저장 가능</small></div>
- <div class="field"><label for="logSelect">실행 기록 선택</label><select id="logSelect"><option value="">새 실행 기록 추가 / 시간 없음</option>\${logs.map(l=>\`<option value="\${esc(l.id)}">\${esc(new Date(l.started_at).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}))} · \${l.actual_minutes}분</option>\`).join('')}</select></div>
- <div class="two">\${formField('시작 시각','started_at','','datetime-local')}\${formField('종료 시각','ended_at','','datetime-local')}</div>
+ <div class="field"><label for="logSelect">실행 기록 선택</label><select id="logSelect"><option value="">새 실행 기록 추가 / 시간 없음</option>${logs.map(l=>`<option value="${esc(l.id)}">${esc(new Date(l.started_at).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}))} · ${l.actual_minutes}분</option>`).join('')}</select></div>
+ <div class="two">${formField('시작 시각','started_at','','datetime-local')}${formField('종료 시각','ended_at','','datetime-local')}</div>
  <p class="help">시간은 선택사항입니다. 과거 기록은 위에서 선택해 수정하며 중복 저장하지 않습니다.</p>
- <div class="field"><label for="f-blocker">막힌 이유 (선택)</label><textarea id="f-blocker" name="blocker" rows="2" placeholder="어려웠던 점이 있다면 적어주세요.">\${esc(c?.blocker||'')}</textarea></div>
- <div class="field"><label for="f-note">추가 메모 (선택)</label><textarea id="f-note" name="note" rows="2" placeholder="남겨두고 싶은 내용">\${esc(c?.note||'')}</textarea></div>
+ <div class="field"><label for="f-blocker">막힌 이유 (선택)</label><textarea id="f-blocker" name="blocker" rows="2" placeholder="어려웠던 점이 있다면 적어주세요.">${esc(c?.blocker||'')}</textarea></div>
+ <div class="field"><label for="f-note">추가 메모 (선택)</label><textarea id="f-note" name="note" rows="2" placeholder="남겨두고 싶은 내용">${esc(c?.note||'')}</textarea></div>
  <div class="buttons"><button class="primary" type="submit">기록 저장</button><button class="light" type="button" id="taskOpen">할 일 상세 ↗</button></div>
  </form>
- \${logs.length?\`<div class="panel"><strong>이 날짜의 실행 기록 \${logs.length}건</strong>\${logs.map(l=>\`<p class="log-item">\${esc(new Date(l.started_at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}))} · \${l.actual_minutes}분<br>\${esc(l.progress||'')}\${l.blocker?' · 막힘: '+esc(l.blocker):''}</p>\`).join('')}</div>\`:''}\`,root=>{
+ ${logs.length?`<div class="panel"><strong>이 날짜의 실행 기록 ${logs.length}건</strong>${logs.map(l=>`<p class="log-item">${esc(new Date(l.started_at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}))} · ${l.actual_minutes}분<br>${esc(l.progress||'')}${l.blocker?' · 막힘: '+esc(l.blocker):''}</p>`).join('')}</div>`:''}`,root=>{
  const f=root.querySelector('#cellForm'),selector=root.querySelector('#logSelect');
  root.querySelector('#taskOpen').onclick=()=>openTask(state.tasks.find(x=>x.id===t.id)||t);
  const restoreLog=()=>{const l=logs.find(x=>x.id===selector.value);f.elements.namedItem('started_at').value=l?localLogDatetime(l.started_at):'';
