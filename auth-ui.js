@@ -21,12 +21,30 @@ function unlockPlanner(){
   button.addEventListener('click',()=>logout.click());
   noticeBar.appendChild(button);
  }
- document.body.classList.remove('auth-locked');
- root.hidden=true;
+ // Keep the neutral loading screen until private state has been fetched and rendered.
+ document.body.classList.add('planner-pending');
+ const loading=document.querySelector('#authLoading .auth-loading-content p');
+ if(loading)loading.textContent='주간 계획을 불러오는 중...';
+ const ready=()=>{
+  document.body.classList.remove('auth-locked','planner-pending');
+  document.body.classList.add('planner-loaded');
+  root.hidden=true;
+  document.removeEventListener('planner:error',failed);
+ };
+ const failed=e=>{
+  document.body.classList.remove('planner-pending');
+  document.body.classList.add('auth-locked');
+  root.hidden=false;
+  message('개인 기록을 불러오지 못했습니다. 새로고침으로 재시도해 주세요.');
+  document.removeEventListener('planner:ready',ready);
+ };
+ document.addEventListener('planner:ready',ready,{once:true});
+ document.addEventListener('planner:error',failed,{once:true});
  const script=document.createElement('script');
  script.src='/app.js';
  script.onerror=()=>{
   plannerBooted=false;
+  document.body.classList.remove('planner-pending');
   document.body.classList.add('auth-locked');
   root.hidden=false;
   message('다이어리 화면을 불러오지 못했습니다. 새로고침해 주세요.');
