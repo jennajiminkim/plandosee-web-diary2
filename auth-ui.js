@@ -9,6 +9,22 @@ const password=form.elements.password;
 const nameInput=form.elements.name;
 let mode='login';
 let currentUser=null;
+let plannerBooted=false;
+function unlockPlanner(){
+ if(!currentUser || plannerBooted)return;
+ plannerBooted=true;
+ document.body.classList.remove('auth-locked');
+ root.hidden=true;
+ const script=document.createElement('script');
+ script.src='/app.js';
+ script.onerror=()=>{
+  plannerBooted=false;
+  document.body.classList.add('auth-locked');
+  root.hidden=false;
+  message('다이어리 화면을 불러오지 못했습니다. 새로고침해 주세요.');
+ };
+ document.body.appendChild(script);
+}
 const logout=document.createElement('button');
 logout.type='button';
 logout.className='auth-toggle';
@@ -31,7 +47,8 @@ function render(){
  if(authenticated){
   notice.textContent='';
   heading.textContent='반가워요, '+(currentUser.name||'기록자')+'님.';
-  message('로그인 세션을 확인했습니다. 다이어리 데이터 연결은 보안 검증 후 이용할 수 있습니다.');
+  message('로그인 세션을 확인했습니다. 개인 다이어리를 불러오는 중입니다.');
+  unlockPlanner();
  }else{
   heading.textContent=mode==='login'?'다시 만나 반가워요.':'작은 시작을 함께해요.';
   submit.textContent=mode==='login'?'로그인':'회원가입';
@@ -57,7 +74,7 @@ form.addEventListener('submit',async e=>{
   const {response,json}=await call(mode,body);
   password.value='';
   if(!response.ok){message(json.error||'요청을 처리하지 못했습니다.');return;}
-  if(await refreshSession()){message('로그인되었습니다. 개인 기록 기능은 계정별 접근 검증 후 열립니다.');return;}
+  if(await refreshSession()){return;}
   if(mode==='signup'){mode='login';render();message('가입 요청이 완료되었습니다. 로그인해 주세요.');}
   else message('로그인 응답은 받았으나 세션을 확인하지 못했습니다. 다시 시도해 주세요.');
  }catch{message('서버 연결을 확인해 주세요.');}
@@ -69,7 +86,9 @@ logout.addEventListener('click',async()=>{
   const {response}=await call('logout',{});
   if(!response.ok){message('로그아웃을 확인하지 못했습니다. 다시 시도해 주세요.');return;}
   if(await refreshSession()){message('세션이 아직 유지되고 있습니다. 관리자에게 알려 주세요.');return;}
-  password.value='';message('로그아웃했습니다.');
+  password.value='';
+  // Clear previously rendered private content instead of keeping it in the DOM.
+  window.location.replace('/');
  }catch{message('서버 연결을 확인해 주세요.');}
  finally{logout.disabled=false;}
 });
