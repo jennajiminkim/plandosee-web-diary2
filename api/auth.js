@@ -54,11 +54,15 @@ export async function neonAuth(req, action, body) {
 }
 
 export function forwardCookies(res, upstream) {
-  const raw = upstream.headers.getSetCookie?.() || [];
-  const safe = raw
-    .filter(v => /^[A-Za-z0-9_.-]+=[^;\r\n]*/.test(v))
-    .map(v => v.split(';').filter(part => !/^\s*(domain|path)=/i.test(part)).join(';') + '; Path=/; Secure; HttpOnly; SameSite=Lax');
-  if (safe.length) res.setHeader('Set-Cookie', safe);
+  const raw=upstream.headers.getSetCookie?.() || [];
+  const safe=raw.filter(v=>/^[A-Za-z0-9_.-]+=[^;\r\n]*/.test(v)).map(v=>{
+    const parts=v.split(';');
+    const first=parts.shift();
+    // Translate cross-site managed-auth cookies to same-origin proxy cookies.
+    const attrs=parts.filter(x=>!/^\s*(domain|path|samesite|partitioned|secure|httponly)(=|$)/i.test(x));
+    return [first,...attrs,'Path=/','Secure','HttpOnly','SameSite=Lax'].join('; ');
+  });
+  if(safe.length)res.setHeader('Set-Cookie',safe);
 }
 
 async function responseJSON(response) {
