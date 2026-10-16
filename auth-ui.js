@@ -29,6 +29,7 @@ function render(){
  modeButton.hidden=authenticated;
  logout.hidden=!authenticated;
  if(authenticated){
+  notice.textContent='';
   heading.textContent='반가워요, '+(currentUser.name||'기록자')+'님.';
   message('로그인 세션을 확인했습니다. 다이어리 데이터 연결은 보안 검증 후 이용할 수 있습니다.');
  }else{
@@ -56,7 +57,7 @@ form.addEventListener('submit',async e=>{
   const {response,json}=await call(mode,body);
   password.value='';
   if(!response.ok){message(json.error||'요청을 처리하지 못했습니다.');return;}
-  if(await refreshSession())return;
+  if(await refreshSession()){message('로그인되었습니다. 개인 기록 기능은 계정별 접근 검증 후 열립니다.');return;}
   if(mode==='signup'){mode='login';render();message('가입 요청이 완료되었습니다. 로그인해 주세요.');}
   else message('로그인 응답은 받았으나 세션을 확인하지 못했습니다. 다시 시도해 주세요.');
  }catch{message('서버 연결을 확인해 주세요.');}
