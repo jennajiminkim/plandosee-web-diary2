@@ -48,6 +48,8 @@ async function call(action,data) {
  return {response,json};
 }
 function render(){
+ document.body.classList.remove('auth-pending');
+ document.body.classList.add('auth-ready');
  const authenticated=Boolean(currentUser);
  form.hidden=authenticated;
  modeButton.hidden=authenticated;
@@ -100,5 +102,9 @@ logout.addEventListener('click',async()=>{
  }catch{message('서버 연결을 확인해 주세요.');}
  finally{logout.disabled=false;}
 });
-render();
-refreshSession().catch(()=>message('인증 서버 연결을 확인해 주세요.'));
+// Keep a neutral loading screen until the first session result is known.
+refreshSession().catch(()=>{
+ document.body.classList.remove('auth-pending');
+ document.body.classList.add('auth-ready');
+ message('인증 서버 연결을 확인해 주세요. 새로고침으로 다시 시도할 수 있습니다.');
+});
