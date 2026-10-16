@@ -8,12 +8,18 @@ export default async function handler(req,res) {
    const uid=await requireUser(req);
    if(req.method==='GET') {
      const result=await asUser(uid,async client=>{
-       const state={};
-       for(const [key,table] of Object.entries(tables)) {
-         const rows=await client.query('SELECT * FROM public.'+table+' LIMIT 3000');
-         state[key]=rows.rows;
-       }
-       return state;
+       // One database round trip instead of nine sequential SELECT calls.
+       // Table names are a compile-time whitelist, never browser input.
+       // Each relation is filtered by the verified user as well as FORCE RLS.
+       const parts=Object.entries(tables).map(([key,table])=>
+         "'"+key+"', COALESCE((SELECT json_agg(r) FROM "+
+         "(SELECT * FROM public."+table+" WHERE user_id=$1 LIMIT 3000) AS r), '[]'::json)"
+       );
+       const result=await client.query(
+         "SELECT json_build_object("+parts.join(',')+") AS state",
+         [uid]
+       );
+       return result.rows[0].state;
      });
      return res.status(200).json(result);
    }
