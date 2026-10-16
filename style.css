@@ -216,3 +216,23 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 .auth-panel .auth-toggle{background:none;border:0;color:#315cad;padding:12px 0}
 .auth-panel [data-message]{min-height:1.4em;white-space:pre-line}
 .auth-panel small{display:block;color:#798ca6;font-size:11px;margin-top:22px}
+
+
+/* Task 7: private diary entry screen, isolated from Task 6 shell. */
+.auth-gate{min-height:100vh;display:grid;place-items:center;padding:32px 18px;background:#f8faff;color:#20365f}
+.auth-panel{width:min(100%,440px);padding:44px 38px;background:#fff;border:1px solid #dfe8fa;border-radius:22px;box-shadow:0 15px 55px #1b3e8714}
+.auth-brand{font-family:Georgia,serif;font-size:27px;letter-spacing:-.05em;color:#1e4099}
+.auth-brand small{display:block;font-family:inherit;font-size:14px;font-style:italic;letter-spacing:0;color:#8d9bb2}
+.auth-kicker{margin:32px 0 9px;color:#9aaaca;font-size:10px;font-weight:750;letter-spacing:.14em}
+.auth-panel h1{font-family:inherit;font-size:27px;font-weight:750;letter-spacing:-.04em}
+.auth-intro{color:#7e8eab;font-size:13px;margin:9px 0 27px}
+.auth-panel form{display:grid;gap:17px}
+.auth-panel form label{display:grid;gap:7px;font-size:12px;font-weight:650}
+.auth-panel form label[hidden]{display:none}
+.auth-panel input{width:100%;padding:13px 14px;border:1px solid #d7dfed;border-radius:10px;background:#fcfdff;font-size:14px;color:#1e3355}
+.auth-panel input:focus-visible{outline:2px solid #426dda;outline-offset:1px}
+.auth-submit{background:#244da4;color:white;border:0;border-radius:10px;padding:13px 18px;font-weight:700;margin-top:5px}
+.auth-message{min-height:19px;font-size:12px;color:#b45164}
+.auth-toggle{border:0;background:none;color:#2855a8;font-size:13px;font-weight:650;padding:8px}
+.auth-foot{text-align:center;font-size:11px;color:#a4aec0;margin-top:25px}
+@media(max-width:520px){.auth-panel{padding:30px 23px}.auth-panel h1{font-size:24px}}
