@@ -198,3 +198,102 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 .journal-theme{border:1px solid #CAD5EA;border-radius:6px;padding:10px 13px;font-size:12px}
 .reflection-field>label,.reflection-field .fieldtop>label{font-size:17px;font-weight:650;color:#24385c}
 @media(max-width:750px){.journal-card{grid-template-columns:1fr;gap:12px;padding:17px}.journal-date{align-items:flex-start;padding:0}.journal-date strong{font-size:78px}.journal-body{gap:16px}.journal-lines{--journal-row-height:36px;font-size:14px}.page-tabs button{padding:10px 12px}.archive-nav{gap:6px}.archive-nav button{padding:3px 8px}}
+
+/* T07 lock screen: the old planner is hidden until authenticated storage is ready. */
+.auth-locked .shell{display:none}
+.auth-gate{min-height:100vh;display:grid;place-items:center;padding:24px;background:#f7f9ff}
+.auth-panel{width:min(460px,100%);background:white;border:1px solid #d8e3f3;border-radius:16px;padding:40px;box-shadow:0 15px 50px #1f438018}
+.auth-brand{font:28px Georgia,serif;color:#173b8f;margin-bottom:30px}
+.auth-brand i{display:block;font-size:14px;color:#7085ab;margin-top:6px}
+.auth-panel h1{font:700 24px/1.35 -apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif;letter-spacing:-.03em;color:#203b68}
+.auth-panel p{color:#687c98;font-size:14px}
+.auth-panel form{display:grid;gap:16px;margin-top:25px}
+.auth-panel label{display:grid;gap:7px;font-size:13px;font-weight:600;color:#29426d}
+.auth-panel label[hidden]{display:none}
+.auth-panel input{width:100%;border:1px solid #cfdaec;border-radius:8px;padding:12px;background:white;color:#1b2a45}
+.auth-panel button[type=submit]{background:#204ba8;color:white;border:0;padding:13px;border-radius:8px;font-weight:700;margin-top:8px}
+.auth-panel button:disabled{opacity:.6}
+.auth-panel .auth-toggle{background:none;border:0;color:#315cad;padding:12px 0}
+.auth-panel [data-message]{min-height:1.4em;white-space:pre-line}
+.auth-panel small{display:block;color:#798ca6;font-size:11px;margin-top:22px}
+
+
+/* Task 7: private diary entry screen, isolated from Task 6 shell. */
+.auth-gate{min-height:100vh;display:grid;place-items:center;padding:32px 18px;background:#f8faff;color:#20365f}
+.auth-panel{width:min(100%,440px);padding:44px 38px;background:#fff;border:1px solid #dfe8fa;border-radius:22px;box-shadow:0 15px 55px #1b3e8714}
+.auth-brand{font-family:Georgia,serif;font-size:27px;letter-spacing:-.05em;color:#1e4099}
+.auth-brand small{display:block;font-family:inherit;font-size:14px;font-style:italic;letter-spacing:0;color:#8d9bb2}
+.auth-kicker{margin:32px 0 9px;color:#9aaaca;font-size:10px;font-weight:750;letter-spacing:.14em}
+.auth-panel h1{font-family:inherit;font-size:27px;font-weight:750;letter-spacing:-.04em}
+.auth-intro{color:#7e8eab;font-size:13px;margin:9px 0 27px}
+.auth-panel form{display:grid;gap:17px}
+.auth-panel form label{display:grid;gap:7px;font-size:12px;font-weight:650}
+.auth-panel form label[hidden]{display:none}
+.auth-panel input{width:100%;padding:13px 14px;border:1px solid #d7dfed;border-radius:10px;background:#fcfdff;font-size:14px;color:#1e3355}
+.auth-panel input:focus-visible{outline:2px solid #426dda;outline-offset:1px}
+.auth-submit{background:#244da4;color:white;border:0;border-radius:10px;padding:13px 18px;font-weight:700;margin-top:5px}
+.auth-message{min-height:19px;font-size:12px;color:#b45164}
+.auth-toggle{border:0;background:none;color:#2855a8;font-size:13px;font-weight:650;padding:8px}
+.auth-foot{text-align:center;font-size:11px;color:#a4aec0;margin-top:25px}
+@media(max-width:520px){.auth-panel{padding:30px 23px}.auth-panel h1{font-size:24px}}
+
+/* Task 7: never reveal the authentication screen over the private planner. */
+#authGate[hidden]{display:none!important}
+.auth-locked .shell{display:none!important}
+.notice #plannerLogout{width:auto;min-width:80px;flex-shrink:0;font-weight:650}
+
+/* Task 7 initial session check: never flash sign-in before authenticated planner. */
+.auth-pending #authGate,.auth-pending .shell{display:none!important}
+.auth-loading{display:none;min-height:100vh;place-items:center;background:#f8faff;color:#1e4099;padding:30px;text-align:center}
+.auth-pending .auth-loading{display:grid}
+.auth-loading-content strong{display:block;font:30px Georgia,serif;letter-spacing:-.045em}
+.auth-loading-content em{display:block;color:#8799b9;font:italic 15px Georgia,serif;margin-top:5px}
+.auth-loading-content p{font-size:13px;margin-top:32px;color:#7084a4}
+.auth-ready .auth-loading{display:none!important}
+
+/* Keep the planner private and invisible until state has finished rendering. */
+.planner-pending .shell{display:none!important}
+.planner-pending #authGate{display:none!important}
+.planner-pending .auth-loading{display:grid!important}
+.planner-loaded .auth-loading{display:none!important}
+
+/* Task 7 PLAN / DO: compact always-visible fields, no nested forms or hidden panels. */
+.drawer-kicker,.drawer-section-label{font-size:11px;font-weight:750;letter-spacing:.085em;color:#3158a2;margin:8px 0 12px}
+.drawer-section-label{border-top:1px solid #dde5f0;padding-top:18px;margin-top:22px}
+.drawer-section-label small,.first-step-label small{font-size:11px;font-weight:500;letter-spacing:0;color:#8798b2;margin-left:5px}
+.first-step-box{border:1px solid #dce7f8;border-radius:12px;padding:16px 15px;background:#f0f5ff;margin:17px 0}
+.first-step-box label{margin-top:8px!important;color:#29497e}
+.first-step-box input{background:white}
+.first-step-box .help{margin:8px 0 0;line-height:1.6}
+.first-step-label{font-size:11px;letter-spacing:.08em;font-weight:750;color:#2b55a2}
+.first-step-view{border:1px solid #dce7f8;background:#f0f5ff;border-radius:12px;padding:14px 16px;margin-bottom:18px}
+.first-step-view .drawer-kicker{display:block;margin:0 0 6px}
+.first-step-view p{margin:0 0 5px;font-size:14px;font-weight:600;overflow-wrap:anywhere}
+.first-step-view small{color:#7087ac;font-size:11px}
+#scheduleDates[hidden]{display:none!important}
+#taskForm .buttons .primary,#cellForm .buttons .primary{flex:1;min-width:150px}
+#taskForm .help,#cellForm .help{line-height:1.6}
+#taskForm select,#cellForm select{max-width:100%}
+@media(max-width:520px){#taskForm .two,#cellForm .two{grid-template-columns:1fr 1fr;gap:9px}.first-step-box{padding:13px}}
+
+/* Task 7 readability: plan-entry labels match the 15px field text. */
+.drawer #taskForm .field > label,
+.drawer #taskForm .first-step-box > label {
+  font-size:15px;
+  font-weight:650;
+  line-height:1.5;
+}
+.drawer #taskForm .first-step-label {
+  font-size:15px;
+  font-weight:750;
+  letter-spacing:.025em;
+}
+.drawer #taskForm .first-step-label small {
+  font-size:12px;
+  font-weight:500;
+}
+.drawer #taskForm .drawer-section-label {
+  font-size:13px;
+}
+/* Priority numbers are informational; open task details from the task title. */
+.weekly td.rank .priority-badge {cursor:default}
