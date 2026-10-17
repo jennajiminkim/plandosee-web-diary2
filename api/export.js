@@ -1,5 +1,5 @@
 import {requireUser,asUser,tables} from './db.js';
-const ordered=['plans','versions','tasks','cells','logs','completions','reflections','journals','colors'];
+const ordered=['plans','versions','tasks','cells','logs','completions','reflections','journals','dailyJournals','colors'];
 export default async function handler(req,res){
  res.setHeader('Cache-Control','private, no-store');
  res.setHeader('Content-Type','application/json; charset=utf-8');
