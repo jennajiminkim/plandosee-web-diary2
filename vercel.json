@@ -2,6 +2,9 @@
   "functions": {
     "api/state.js": {
       "maxDuration": 15
+    },
+    "api/account.js": {
+      "maxDuration": 30
     }
   },
   "headers": [
