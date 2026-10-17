@@ -469,11 +469,8 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 @media(max-width:850px){
  .insights-grid {grid-template-columns:minmax(0,1fr)}
  .insights-grid > .insights-card {padding:18px}
- .time-overview {grid-template-columns:minmax(145px,210px) minmax(0,1fr)}
 }
 @media(max-width:420px){
- .time-overview {grid-template-columns:minmax(105px,125px) minmax(0,1fr);gap:9px}
- .time-value-row strong {font-size:16px}
  .insights-grid .plan-picker {flex-wrap:wrap}
  .insights-grid .plan-picker select {flex-basis:100%}
 }
