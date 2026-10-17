@@ -13,10 +13,45 @@ function pastelPeriod(hex,whiteWeight=0.16){
 }
 const tags={업무:'#f2dfcc',공부:'#dce9f7',취미:'#dcebd9',약속:'#f2e0e9',생활:'#eee3c8',기타:'#e2e2dc'};
 // Choose readable text for any user-selected task color; preserve exact badge hue.
+// Derive a tone-on-tone, readable label color from the saved task/priority color.
+// Pastel backgrounds receive darker text of the same hue; deep backgrounds
+// receive a light tint. Check WCAG-style contrast for custom palette colors.
 const tagTextColor=hex=>{
  if(!/^#[0-9a-f]{6}$/i.test(hex||''))return '#273346';
- const rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(x=>x<=0.04045?x/12.92:((x+0.055)/1.055)**2.4);
- return rgb[0]*0.2126+rgb[1]*0.7152+rgb[2]*0.0722>0.179?'#273346':'#fff';
+ const bg=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
+ const luminance=rgb=>{
+  const linear=rgb.map(x=>{x/=255;return x<=0.04045?x/12.92:((x+0.055)/1.055)**2.4});
+  return linear[0]*0.2126+linear[1]*0.7152+linear[2]*0.0722;
+ };
+ const channels=bg.map(x=>x/255);
+ const max=Math.max(...channels),min=Math.min(...channels),delta=max-min;
+ const l=(max+min)/2;
+ let h=0,s=0;
+ if(delta){
+  s=delta/(1-Math.abs(2*l-1));
+  const [r,g,b]=channels;
+  h=max===r?((g-b)/delta)%6:max===g?(b-r)/delta+2:(r-g)/delta+4;
+  h=(h*60+360)%360;
+ }
+ const toRGB=(hue,saturation,lightness)=>{
+  const chroma=saturation*Math.min(lightness,1-lightness);
+  const part=n=>{
+   const k=(n+hue/30)%12;
+   return Math.round((lightness-chroma*Math.max(-1,Math.min(k-3,9-k,1)))*255);
+  };
+  return [part(0),part(8),part(4)];
+ };
+ const bgLight=luminance(bg),useLightText=bgLight<=0.179;
+ const saturation=s<0.15?0:Math.min(0.7,Math.max(0.44,s*0.8));
+ const textSaturation=useLightText?(s<0.15?0:Math.min(0.55,Math.max(0.25,s*0.6))):saturation;
+ let textRGB=[39,51,70];
+ for(let i=0;i<=100;i++){
+  const textLightness=useLightText?Math.min(0.99,0.78+i*0.002):Math.max(0.07,0.39-i*0.003);
+  textRGB=toRGB(h,textSaturation,textLightness);
+  const textLight=luminance(textRGB);
+  if((Math.max(bgLight,textLight)+0.05)/(Math.min(bgLight,textLight)+0.05)>=4.5)break;
+ }
+ return '#'+textRGB.map(x=>x.toString(16).padStart(2,'0')).join('');
 };
 const iso=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
 const addDays=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r};
