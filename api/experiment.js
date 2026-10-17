@@ -24,7 +24,7 @@ async function state(db,uid){
   day3_day5_mean:after.length===3?average(after):null,
   comparison_ready:data.length===5&&Boolean(change)&&before.length===2&&after.length===3}};
 }
-async function run(db,uid,action,data){
+export async function run(db,uid,action,data){
  // Serializes concurrent duplicate daily-record/revision writes for this user.
  await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,20261016))',[uid]);
  const current=await state(db,uid);
