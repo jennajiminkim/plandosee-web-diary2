@@ -14,12 +14,23 @@
       <div class="time-donut-wrap">
         <svg class="time-donut" viewBox="0 0 170 170" role="img" aria-label="계획 대비 실제 시간 사용 비율">
           <circle cx="85" cy="85" r="57" fill="none" stroke="#E9EDF5" stroke-width="12"></circle>
-          <circle id="timeMainArc" cx="85" cy="85" r="57" fill="none" stroke="#6994EE" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 358.142" transform="rotate(-90 85 85)"></circle>
-          <circle id="timeExtraArc" cx="85" cy="85" r="74" fill="none" stroke="#57CFB3" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 464.956" transform="rotate(-90 85 85)" style="display:none"></circle>
+          <circle id="timeMainArc" cx="85" cy="85" r="57" fill="none" stroke="#5F8FF6" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 358.142" transform="rotate(-90 85 85)"></circle>
+          <circle id="timeExtraArc" cx="85" cy="85" r="74" fill="none" stroke="#39D3AD" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 464.956" transform="rotate(-90 85 85)" style="display:none"></circle>
           <text id="timeRatioValue" class="time-ratio-value" x="85" y="84" dominant-baseline="middle" text-anchor="middle">—</text>
           <text class="time-ratio-caption" x="85" y="106" text-anchor="middle">시간 사용 비율</text>
         </svg>
-        <p id="timeRatioStatus" class="time-ratio-status" aria-live="polite" hidden></p>
+        <div class="time-donut-legend" aria-label="계획 시간과 실제 기록 시간">
+          <div class="time-donut-legend-row">
+            <span class="time-dot time-dot-planned" aria-hidden="true"></span>
+            <span class="time-legend-label">계획한 시간</span>
+            <strong id="estLegend">0h 0m</strong>
+          </div>
+          <div class="time-donut-legend-row">
+            <span class="time-dot time-dot-actual" aria-hidden="true"></span>
+            <span class="time-legend-label">실제한 시간</span>
+            <strong id="actualLegend">0h 0m</strong>
+          </div>
+        </div>
         <p id="timeRatioHint" class="time-ratio-hint" hidden>비교할 예상 시간이 없습니다.</p>
       </div>
       <div class="time-value-list">
@@ -41,8 +52,8 @@
       </div>
     </div>
     <div class="time-summary-footer">
-      <p class="time-explanation">계획한 시간과 실제 기록한 시간을 비교합니다. 시간 사용 비율은 목표 달성률을 의미하지 않습니다.</p>
       <button id="timeDetails" class="link-btn">시간별 기록 보기 ↗</button>
+      <p class="time-explanation">계획한 시간과 실제 기록한 시간을 비교합니다. 시간 사용 비율은 목표 달성률을 의미하지 않습니다.</p>
     </div>
   </section>
   <section class="reflection insights-card" aria-labelledby="planReflectionTitle">
