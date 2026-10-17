@@ -537,7 +537,7 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
   border-radius:2px;
 }
 @media(prefers-reduced-motion:reduce){.time-diff-bar{transition:none}}
-@container time-card (max-width:650px) {
+@container time-card (max-width:560px) {
   .time-overview {
     grid-template-columns:minmax(0,1fr);
     gap:18px;
