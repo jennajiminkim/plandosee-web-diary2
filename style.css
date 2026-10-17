@@ -362,13 +362,13 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 }
 .time-overview {
   display:grid;
-  grid-template-columns:minmax(0,210px) minmax(0,1fr);
+  grid-template-columns:minmax(0,255px) minmax(0,1fr);
   align-items:center;
   gap:28px;
   margin:18px 0 16px;
 }
 .time-donut-wrap {min-width:0;text-align:center}
-.time-donut {display:block;width:100%;max-width:210px;height:auto;margin:0 auto}
+.time-donut {display:block;width:100%;max-width:255px;height:auto;margin:0 auto}
 .time-ratio-value {
   font:650 29px/1.1 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
   fill:#293D70;
@@ -441,7 +441,7 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 @media(prefers-reduced-motion:reduce){.time-diff-bar{transition:none}}
 @container time-card (max-width:560px) {
   .time-overview {grid-template-columns:minmax(0,1fr);gap:17px;margin-top:12px}
-  .time-donut {max-width:200px}
+  .time-donut {max-width:230px}
   .time-value-list {border-left:0;border-top:1px solid #DFE6F2;padding:17px 0 0;gap:17px}
   .time-comparison-values {font-size:24px}
 }
