@@ -1,5 +1,9 @@
 import {requireUser,asUser,tables} from './db.js';
 const ordered=['plans','versions','tasks','cells','logs','completions','reflections','journals','dailyJournals','colors'];
+// Observational data is separate from the planner tables, but is private user data too.
+const observationTables={
+ experiments:'pds_experiments',dailyRecords:'pds_daily_records',ruleChanges:'pds_rule_changes'
+};
 export default async function handler(req,res){
  res.setHeader('Cache-Control','private, no-store');
  res.setHeader('Content-Type','application/json; charset=utf-8');
@@ -18,6 +22,12 @@ export default async function handler(req,res){
      const {user_id,...safe}=row;
      return safe;
     });
+   }
+   // The five-day observation belongs in the same private backup.
+   for(const [key,table] of Object.entries(observationTables)){
+    const rows=await client.query('SELECT * FROM public.'+table+' WHERE user_id=$1 ORDER BY id LIMIT 10001',[uid]);
+    if(rows.rows.length>10000)throw Object.assign(new Error('export_limit_exceeded'),{status:413});
+    data[key]=rows.rows.map(({user_id,...safe})=>safe);
    }
    return data;
   });

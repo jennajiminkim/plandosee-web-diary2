@@ -8,7 +8,7 @@ function validateMetric(e,value){
  return Math.round(value*10000)/10000;
 }
 function send(res,status,body){res.setHeader('Cache-Control','private, no-store');res.setHeader('Content-Type','application/json; charset=utf-8');return res.status(status).json(body)}
-async function state(db,uid){
+export async function state(db,uid){
  const [one,rows,changes,clock]=await Promise.all([
   db.query('SELECT * FROM public.pds_experiments WHERE user_id=$1 ORDER BY created_at ASC LIMIT 1',[uid]),
   db.query('SELECT * FROM public.pds_daily_records WHERE user_id=$1 ORDER BY record_date ASC LIMIT 6',[uid]),
@@ -18,9 +18,13 @@ async function state(db,uid){
  const data=rows.rows,change=changes.rows[0]||null;
  const nums=part=>part.filter(x=>x.metric_value!==null).map(x=>Number(x.metric_value));
  const average=a=>a.length?Math.round((a.reduce((s,x)=>s+x,0)/a.length)*10000)/10000:null;
- const before=nums(data.slice(0,2)),after=nums(data.slice(2,5));
+ const before=nums(data.slice(0,2)),after=nums(data.slice(2,5)),all=nums(data);
+ const total=a=>Math.round(a.reduce((sum,x)=>sum+x,0)*10000)/10000;
  return {experiment:one.rows[0]||null,records:data,change,today:clock.rows[0].today,
-  progress:{observed_days:data.length,rule_changes:changes.rows.length,day1_day2_mean:before.length===2?average(before):null,
+  progress:{observed_days:data.length,measured_days:all.length,rule_changes:changes.rows.length,
+  day1_day2_sum:total(before),day3_day5_sum:total(after),
+  total_sum:total(all),total_mean:average(all),
+  day1_day2_mean:before.length===2?average(before):null,
   day3_day5_mean:after.length===3?average(after):null,
   comparison_ready:data.length===5&&Boolean(change)&&before.length===2&&after.length===3}};
 }
@@ -70,15 +74,23 @@ export async function run(db,uid,action,data){
  }else if(action==='revise'){
   if(!e||rows.length!==2||current.change)throw error('revision_requires_exactly_two_days',409);
   const field=data.rule_field;
-  if(!Object.hasOwn(rules,field))throw error('unsupported_rule');
+  const isPlanRule=field==='plan_rule';
+  if(!isPlanRule&&!Object.hasOwn(rules,field))throw error('unsupported_rule');
   if(!bounded(data.new_rule,500)||!bounded(data.reason,1500))throw error('revision_details_required');
-  if(e[field]===data.new_rule.trim())throw error('rule_must_change');
-  const old='['+rules[field]+'] '+e[field],now='['+rules[field]+'] '+data.new_rule.trim();
+  // For the agreed MY FIRST STEP experiment, preserve the original action-planning
+  // rule as the baseline. Do not overwrite the metric or its calculation method.
+  const firstStep=e.metric_name==='하루에 첫 행동을 실행한 할 일 수'&&e.metric_unit==='건';
+  if(isPlanRule&&!firstStep)throw error('plan_rule_baseline_not_configured');
+  const initialPlanRule='매일 실행 전에 핵심 할 일 최대 3개를 선정하고 각 할 일의 MY FIRST STEP(2분 안에 할 첫 행동)을 정한다.';
+  const old=isPlanRule?'[계획 규칙] '+initialPlanRule:'['+rules[field]+'] '+e[field];
+  const now=isPlanRule?'[계획 규칙] '+data.new_rule.trim():'['+rules[field]+'] '+data.new_rule.trim();
+  if(isPlanRule&&data.new_rule.trim()===initialPlanRule||!isPlanRule&&e[field]===data.new_rule.trim())throw error('rule_must_change');
   await db.query(
     'INSERT INTO public.pds_rule_changes(user_id,experiment_id,old_rule,new_rule,reason,day1_record_id,day2_record_id) VALUES ($1,$2,$3,$4,$5,$6,$7)',
     [uid,e.id,old,now,data.reason.trim(),rows[0].id,rows[1].id]);
-  // Exactly one handling rule may change; metric & calculation definition stay immutable.
-  await db.query('UPDATE public.pds_experiments SET '+field+'=$1 WHERE id=$2 AND user_id=$3',[data.new_rule.trim(),e.id,uid]);
+  // Only the action-planning rule changes. The original metric, unit,
+  // calculation_rule and four missing/duplicate/outlier/rounding rules remain fixed.
+  if(!isPlanRule)await db.query('UPDATE public.pds_experiments SET '+field+'=$1 WHERE id=$2 AND user_id=$3',[data.new_rule.trim(),e.id,uid]);
  }else throw error('unsupported_action');
  return state(db,uid);
 }
