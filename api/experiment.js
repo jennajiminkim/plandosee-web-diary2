@@ -8,7 +8,7 @@ function validateMetric(e,value){
  return Math.round(value*10000)/10000;
 }
 function send(res,status,body){res.setHeader('Cache-Control','private, no-store');res.setHeader('Content-Type','application/json; charset=utf-8');return res.status(status).json(body)}
-async function state(db,uid){
+export async function state(db,uid){
  const [one,rows,changes,clock]=await Promise.all([
   db.query('SELECT * FROM public.pds_experiments WHERE user_id=$1 ORDER BY created_at ASC LIMIT 1',[uid]),
   db.query('SELECT * FROM public.pds_daily_records WHERE user_id=$1 ORDER BY record_date ASC LIMIT 6',[uid]),
