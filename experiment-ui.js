@@ -25,7 +25,17 @@ function show(s){
   '오늘 선정한 최대 3개 할 일과 실제로 첫 행동을 실행한 할 일, 시작에 도움이 된 점 또는 어려웠던 이유를 기록해 주세요.':
   '오늘 어떤 활동을 했고 어떻게 측정했는지 기록해 주세요.';
  $('summary').innerHTML='<strong>'+escape(e.question)+'</strong><p>지표: '+escape(e.metric_name)+' ('+escape(e.metric_unit)+')</p><p>계산 방식: '+escape(e.calculation_rule)+'</p><p>진행: '+n+'/5일 · 규칙 변경: '+(revised?'완료':'대기')+'</p>';
- $('record').hidden=n>=5||(n>=2&&!revised)||s.records.some(r=>r.record_date===s.today);
+ const todayIndex=s.records.findIndex(r=>r.record_date===s.today);
+ const todayRecord=todayIndex>=0?s.records[todayIndex]:null;
+ const editingLocked=Boolean(todayRecord&&revised&&todayIndex<2);
+ // Let a saved record be corrected on the SAME calendar day, not inserted twice.
+ $('record').hidden=todayRecord?editingLocked:n>=5||(n>=2&&!revised);
+ const form=$('record');
+ form.querySelector('button[type="submit"]').textContent=todayRecord?'오늘 기록 수정 저장':'오늘 기록 저장';
+ if(todayRecord){
+  form.elements.namedItem('metric_value').value=String(todayRecord.metric_value);
+  form.elements.namedItem('note').value=todayRecord.note||'';
+ }
  $('revision').hidden=n!==2||revised;
  const p=s.progress;
  $('history').innerHTML=(s.records.length?s.records.map((r,i)=>'<p><strong>Day '+(i+1)+' · '+escape(r.record_date)+'</strong> — '+escape(r.metric_value)+' '+escape(e.metric_unit)+'<span style="display:block">'+escape(r.note)+'</span></p>').join(''):'<p>아직 기록이 없습니다.</p>')+
@@ -42,7 +52,7 @@ function recordNotice(message,{failure=false}={}){
  feedback.scrollIntoView?.({block:'nearest',behavior:'smooth'});
 }
 async function perform(action,data){
- const isRecord=action==='record';
+ const isRecord=action==='record'||action==='record.update';
  if(busy){if(isRecord)recordNotice('이미 저장 요청을 처리하고 있습니다. 잠시 기다려 주세요.');return}
  busy=true;
  const button=isRecord?$('record').querySelector('button[type="submit"]'):null;
@@ -53,7 +63,7 @@ async function perform(action,data){
   const result=await call(action,data);
   show(result);
   if(isRecord){
-   const msg='오늘('+result.today+') 기록이 저장되었습니다. ('+result.records.length+'/5일)';
+   const msg='오늘('+result.today+') 기록이 '+(action==='record.update'?'수정':'저장')+'되었습니다. ('+result.records.length+'/5일)';
    recordNotice(msg);$('status').textContent=msg;
   }
  }catch(e){
@@ -90,6 +100,6 @@ $('record').addEventListener('invalid',e=>{
  const input=e.target;
  recordNotice('입력 확인이 필요합니다: '+input.validationMessage,{failure:true});
 },true);
-$('record').onsubmit=e=>{e.preventDefault();if(!current)return;const data=Object.fromEntries(new FormData(e.target));data.metric_value=Number(data.metric_value);data.record_date=current.today;perform('record',data)};
+$('record').onsubmit=e=>{e.preventDefault();if(!current)return;const data=Object.fromEntries(new FormData(e.target));data.metric_value=Number(data.metric_value);data.record_date=current.today;const today=current.records.find(r=>r.record_date===current.today);if(today)data.record_id=today.id;perform(today?'record.update':'record',data)};
 $('revision').onsubmit=e=>{e.preventDefault();perform('revise',Object.fromEntries(new FormData(e.target)))};
 call().then(show).catch(e=>$('status').textContent='로그인 또는 데이터 연결을 확인하세요: '+e.message);
