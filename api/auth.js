@@ -7,7 +7,9 @@ const endpoints = {
   signup: { method: 'POST', path: '/sign-up/email' },
   login: { method: 'POST', path: '/sign-in/email' },
   logout: { method: 'POST', path: '/sign-out' },
-  session: { method: 'GET', path: '/get-session' }
+  session: { method: 'GET', path: '/get-session' },
+  // Internal server-to-server only. /api/auth?action=deleteSelf is blocked below.
+  deleteSelf: { method: 'POST', path: '/delete-user' }
 };
 
 function originOf(req) {
@@ -86,7 +88,7 @@ export default async function handler(req, res) {
 
   const action = typeof req.query?.action === 'string' ? req.query.action : '';
   const spec = endpoints[action];
-  if (!spec || req.method !== spec.method) return res.status(404).json({ error: 'not_found' });
+  if (!spec || action === 'deleteSelf' || req.method !== spec.method) return res.status(404).json({ error: 'not_found' });
 
   if (spec.method === 'POST') {
     const origin = originOf(req);
