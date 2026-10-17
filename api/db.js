@@ -9,7 +9,7 @@ pg.types.setTypeParser(1082, 'text', value => value);
 export const tables = {
   plans:'pds_plans', versions:'pds_plan_versions', tasks:'pds_tasks', cells:'pds_cells',
   logs:'pds_logs', completions:'pds_completion_events', reflections:'pds_reflections',
-  journals:'pds_weekly_reviews', colors:'pds_color_swatches'
+  journals:'pds_weekly_reviews', dailyJournals:'pds_daily_journals', colors:'pds_color_swatches'
 };
 export function error(message, status=400) {
   return Object.assign(new Error(message),{status});

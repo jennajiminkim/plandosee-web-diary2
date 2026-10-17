@@ -2,10 +2,10 @@ import {randomUUID,createHash} from 'node:crypto';
 import {requireUser,asUser,error} from './db.js';
 import {preview} from './import-preview.js';
 
-const keys=['plans','versions','tasks','cells','logs','completions','reflections','journals','colors'];
+const keys=['plans','versions','tasks','cells','logs','completions','reflections','journals','dailyJournals','colors'];
 const tables={plans:'pds_plans',versions:'pds_plan_versions',tasks:'pds_tasks',
  cells:'pds_cells',logs:'pds_logs',completions:'pds_completion_events',
- reflections:'pds_reflections',journals:'pds_weekly_reviews',colors:'pds_color_swatches'};
+ reflections:'pds_reflections',journals:'pds_weekly_reviews',dailyJournals:'pds_daily_journals',colors:'pds_color_swatches'};
 const fields={
  plans:['title','start_date','end_date','priority','success_criteria','estimated_minutes','deleted_at','created_at','updated_at'],
  versions:['snapshot','changed_at'],
@@ -15,6 +15,7 @@ const fields={
  completions:['completed_at'],
  reflections:['question','answer','improvement','updated_at'],
  journals:['week_start','entry_date','question','discovery','next_action','bg_color','date_color','created_at','updated_at'],
+ dailyJournals:['entry_date','question','discovery','next_action','bg_color','date_color','created_at','updated_at'],
  colors:['color','usage_count','last_used']
 };
 const defaults={
@@ -23,6 +24,7 @@ const defaults={
  cells:{state:'planned',progress:'',note:'',blocker:''},logs:{progress:'',blocker:''},
  reflections:{question:'',answer:'',improvement:''},
  journals:{question:'',discovery:'',next_action:'',bg_color:'#FAFAFA',date_color:'#1E4099'},
+ dailyJournals:{question:'',discovery:'',next_action:'',bg_color:'#FAFAFA',date_color:'#1E4099'},
  colors:{usage_count:1}
 };
 function pick(row,key){
@@ -43,7 +45,7 @@ async function migrate(db,uid,body,counts,fingerprint){
  const guard=await db.query('INSERT INTO public.pds_import_batches(user_id,fingerprint,record_counts) VALUES($1,$2,$3) ON CONFLICT(user_id,fingerprint) DO NOTHING RETURNING id',[uid,fingerprint,JSON.stringify(counts)]);
  if(!guard.rowCount)throw error('already_imported',409);
  const maps={};
- for(const key of ['plans','versions','tasks','cells','logs','reflections','journals']){
+ for(const key of ['plans','versions','tasks','cells','logs','reflections','journals','dailyJournals']){
   maps[key]=new Map(body[key].map(row=>[row.id,randomUUID()]));
  }
  const get=(key,id)=>id==null?null:maps[key].get(id);
@@ -66,6 +68,7 @@ async function migrate(db,uid,body,counts,fingerprint){
   await db.query('UPDATE public.pds_plans SET from_reflection_id=$1 WHERE id=$2 AND user_id=$3',[get('reflections',row.from_reflection_id),get('plans',row.id),uid]);
  }
  for(const row of body.journals)await insert(db,'journals',uid,{id:get('journals',row.id),plan_id:get('plans',row.plan_id),...pick(row,'journals')});
+ for(const row of body.dailyJournals)await insert(db,'dailyJournals',uid,{id:get('dailyJournals',row.id),plan_id:get('plans',row.plan_id),...pick(row,'dailyJournals')});
  for(const row of body.colors){
   const value=pick(row,'colors');
   await db.query('INSERT INTO public.pds_color_swatches(user_id,color,usage_count,last_used) VALUES($1,$2,$3,$4) ON CONFLICT(user_id,color) DO NOTHING',
@@ -86,7 +89,7 @@ export default async function handler(req,res){
   let envelope;
   try{envelope=typeof req.body==='string'?JSON.parse(req.body):req.body||{}}catch{throw error('invalid_json')}
   if(!envelope||envelope.confirm!=='IMPORT'||!envelope.data||typeof envelope.data!=='object')throw error('explicit_confirmation_required');
-  const body=envelope.data;
+  const body={...envelope.data,dailyJournals:envelope.data.dailyJournals??[]};
   const check=preview(body);
   if(!check.valid)return res.status(422).json({error:'invalid_import',issues:check.issues});
   // Stable across export_at timestamps and object wrapper metadata.
@@ -96,6 +99,11 @@ export default async function handler(req,res){
    if(weekDates.length){
     const r=await db.query('SELECT week_start::text FROM public.pds_weekly_reviews WHERE user_id=$1 AND week_start=ANY($2::date[])',[uid,weekDates]);
     if(r.rowCount)throw error('existing_weekly_review_conflict',409);
+   }
+   const dailyDates=body.dailyJournals.map(row=>row.entry_date);
+   if(dailyDates.length){
+    const r=await db.query('SELECT entry_date::text FROM public.pds_daily_journals WHERE user_id=$1 AND entry_date=ANY($2::date[])',[uid,dailyDates]);
+    if(r.rowCount)throw error('existing_daily_review_conflict',409);
    }
    // Strict cross-entity checks beyond the structural preview.
    for(const row of body.logs){
