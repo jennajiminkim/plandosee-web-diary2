@@ -54,6 +54,10 @@ export async function runAccountDeletion({db,userId,managedDelete}){
  const before=await countOwnedData(db,userId);
  const wiped=await clearOwnedData(db,userId);
  if(wiped.total!==before.total)throw error('data_delete_count_mismatch',503);
+ // Perform every SQL check before issuing the irreversible external
+ // auth deletion, minimizing the chance of an orphaned data transaction.
+ const remaining=await countOwnedData(db,userId);
+ if(remaining.total!==0)throw error('data_delete_incomplete',503);
  const response=await managedDelete();
  if(!response?.ok)throw error('auth_delete_unavailable_or_rejected',409);
  let payload;
@@ -62,8 +66,6 @@ export async function runAccountDeletion({db,userId,managedDelete}){
  // NOT a deletion and must not commit the planner data deletion.
  if(payload?.success!==true||payload?.message!=='User deleted')
   throw error('auth_delete_not_completed',409);
- const remaining=await countOwnedData(db,userId);
- if(remaining.total!==0)throw error('data_delete_incomplete',503);
  return {deleted:true,record_count:wiped.total};
 }
 export default async function handler(req,res){
