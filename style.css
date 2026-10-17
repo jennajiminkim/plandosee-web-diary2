@@ -155,7 +155,7 @@ input:focus, select:focus, textarea:focus, button:focus-visible {
 }
 
 /* Submission: clickable time evidence figures. */
-#estTotal[role="button"],#actualTotal[role="button"],#diffTotal[role="button"]{cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
+#estTotal[role="button"],#actualTotal[role="button"],#diffTotal[role="button"]{cursor:pointer;text-decoration:none;text-decoration-line:none;border-bottom:0}
 #estTotal:focus-visible,#actualTotal:focus-visible,#diffTotal:focus-visible{outline:2px solid #2456EA;outline-offset:4px}
 
 /* v3 refinements: task inheritance, reusable colors, and one-week-one-page journal */
@@ -450,7 +450,7 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 .time-section-label {
   margin:0 0 12px;
   color:#6F7D98;
-  font-size:17px;
+  font-size:13px;
   font-weight:650;
   line-height:1.35;
 }
@@ -464,7 +464,7 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 .time-comparison-values strong,
 .time-difference #diffTotal {
   font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
-  font-size:clamp(25px,5.25cqw,36px);
+  font-size:20px;
   font-weight:700;
   line-height:1.23;
   font-variant-numeric:tabular-nums;
@@ -490,7 +490,7 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
   color:#B481D3;
 }
 .time-diff-track {
-  width:100%;
+  width:calc(100% - 20px);
   height:13px;
   overflow:hidden;
   border-radius:999px;
@@ -552,15 +552,15 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
     padding:18px 0 0;
     gap:22px;
   }
-  .time-section-label {font-size:15px}
+  .time-section-label {font-size:11px}
   .time-comparison-values strong,.time-difference #diffTotal {
-    font-size:clamp(23px,5cqw,33px);
+    font-size:18px;
   }
   .time-summary-footer {margin-top:24px}
 }
 @container time-card (max-width:340px) {
   .time-comparison-values {gap:8px}
-  .time-comparison-values strong,.time-difference #diffTotal {font-size:clamp(19px,6.8cqw,26px)}
+  .time-comparison-values strong,.time-difference #diffTotal {font-size:16px}
   .time-summary-footer {align-items:flex-start;flex-wrap:wrap}
   .time-explanation {flex-basis:100%;text-align:right}
 }
