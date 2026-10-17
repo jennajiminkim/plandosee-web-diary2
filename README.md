@@ -90,7 +90,7 @@
 | 자료 조회 | [api/state.js](api/state.js) — GET /api/state | 인증 후 본인 계정 자료만 집계 |
 | 자료 저장/수정/삭제 | [api/state.js](api/state.js), [api/actions.js](api/actions.js) | 인증 확인, 소유자 필터, DB 트랜잭션 |
 | SQL 권한 경계 | [api/db.js](api/db.js), [neon/001_diary_schema.sql](neon/001_diary_schema.sql) | pds_runtime 역할, app.user_id, PostgreSQL FORCE RLS |
-| 개인 JSON 백업 | [api/export.js](api/export.js) | 본인 기본 플래너 기록을 하나의 JSON으로 받음 |
+| 개인 JSON 백업 | [api/export.js](api/export.js) | 본인 플래너·날짜별 카드·5일 관찰/규칙 변경을 하나의 JSON으로 받음. **기존 가져오기 기능에서 관찰 3종의 재가져오기는 아직 지원하지 않음** |
 | 백업 검사·가져오기 | [api/import-preview.js](api/import-preview.js), [api/import.js](api/import.js) | 파일/관계 검사, 본인 계정으로 복사, 중복 방지 |
 | 5일 관찰 | [experiment.html](experiment.html), [experiment-ui.js](experiment-ui.js), [api/experiment.js](api/experiment.js) | 하루 측정값, 규칙 변경, 전후 평균 |
 | 계정 분리 테스트 | [isolation-test.html](isolation-test.html), [api/ownership-test.js](api/ownership-test.js) | 테스트 전용 기록의 목록·읽기·수정·삭제 시도 |
@@ -148,9 +148,9 @@
 | --- | --- |
 | T07-C04~C08 / C23~C27 | 입력 항목과 계산 규칙 코드는 존재. 실제 사용자가 1일차에 무엇을 확정했는지 **실제 기록 확인 필요** |
 | T07-C07 | 실날짜에 최대 5건 저장 기능 존재. **실제 본인 계정에 5일치가 완성되었는지 미확인** |
-| T07-C09~C12 | 현재 바꾸는 것은 **누락값·중복값·이상값·반올림이라는 '처리 규칙'**. 과제가 요구하는 **'계획 규칙' 변경**과 다르므로 엄격한 심사에서 불충분할 수 있음 |
+| T07-C09~C12 | **2026-10-18 코드 보완:** Day 2 뒤·Day 3 전 `MY FIRST STEP 실행 계획 규칙`을 기본 선택지로 제공, 1회 변경 시각·이유·Day 1/2 ID를 보존. **사용자의 실제 규칙 변경 수행 및 날짜 순서는 아직 미검증** |
 | T07-C13~C15 | 같은 지표/단위/계산식으로 전후 평균 비교 코드는 존재. 실제 일지 5일 값으로 검증 필요 |
-| T07-C132 | 전후 평균은 표시. **5일 전체 합계/전체 평균의 화면값과 손계산 대조는 아직 별도 증거 필요** |
+| T07-C132 | **2026-10-18 전체 합계·전체 평균·전후 합계/평균 표시 코드 추가.** 사용자 본인 5일 실측값과 손계산 대조는 아직 필요 |
 | T07-C133 | **2026-10-18 소스 보완:** 기본 기록에 더해 5일 관찰용 실험·일지·규칙 변경까지 계정별 JSON 내보내기에 포함하도록 수정. **실제 파일 다운로드 후 배열 확인은 미검증** |
 | T07-C134 | 현행 코드에 사용자가 직접 계정을 삭제하고 데이터도 삭제하는 UI/API는 확인되지 않음 |
 | T07-C03 | 메인 운영 도메인은 로그인 첫 화면 구현. 단독 /experiment.html은 비로그인 시 기록 대신 로그인/연결 확인 안내만 표시함 |
