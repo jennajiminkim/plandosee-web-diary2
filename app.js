@@ -216,12 +216,22 @@ function openCell(t,day){
 
 function showPlanner(){ $('plannerPage').hidden=false;$('archivePage').hidden=true;$('navPlanner').classList.add('selected');$('navArchive').classList.remove('selected');window.scrollTo({top:0,behavior:'instant'}) }
 function showArchive(){ $('plannerPage').hidden=true;$('archivePage').hidden=false;$('navPlanner').classList.remove('selected');$('navArchive').classList.add('selected');renderArchive();window.scrollTo({top:0,behavior:'instant'}) }
+// Older weekly entries retained their original entry_date on later saves. Show the most recent
+// saved day in Seoul from updated_at, without mutating the user's existing records.
+const journalSeoulDateFormat=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'});
+function journalCardDate(j){
+ const stamp=Date.parse(j.updated_at||'');
+ if(!Number.isFinite(stamp))return j.entry_date;
+ const parts=Object.fromEntries(journalSeoulDateFormat.formatToParts(new Date(stamp)).map(p=>[p.type,p.value]));
+ const saved=`${parts.year}-${parts.month}-${parts.day}`;
+ return saved>j.entry_date?saved:j.entry_date;
+}
 function archiveDate(isoDate){const dt=new Date(isoDate+'T12:00:00');return {month:dt.toLocaleString('en-US',{month:'long'}).toUpperCase(),day:dt.getDate(),year:dt.getFullYear()}}
 function renderArchive(){
  const list=$('archiveCards');list.replaceChildren();$('archiveMonth').textContent=archiveMonth.replace('-', '. ');
- const journals=state.journals.filter(j=>j.entry_date.slice(0,7)===archiveMonth&&(j.discovery?.trim()||j.next_action?.trim())).sort((a,b)=>b.entry_date.localeCompare(a.entry_date)||b.week_start.localeCompare(a.week_start));
+ const journals=state.journals.filter(j=>journalCardDate(j).slice(0,7)===archiveMonth&&(j.discovery?.trim()||j.next_action?.trim())).sort((a,b)=>journalCardDate(b).localeCompare(journalCardDate(a))||b.week_start.localeCompare(a.week_start));
  if(!journals.length){const div=document.createElement('div');div.className='archive-empty';div.textContent='';list.append(div);return}
- for(const j of journals){const date=archiveDate(j.entry_date),bg=/^#[0-9a-f]{6}$/i.test(j.bg_color)?j.bg_color:'#FAFAFA',ink=/^#[0-9a-f]{6}$/i.test(j.date_color)?j.date_color:'#1E4099';
+ for(const j of journals){const date=archiveDate(journalCardDate(j)),bg=/^#[0-9a-f]{6}$/i.test(j.bg_color)?j.bg_color:'#FAFAFA',ink=/^#[0-9a-f]{6}$/i.test(j.date_color)?j.date_color:'#1E4099';
  const c=document.createElement('article');c.className='journal-card';c.style.setProperty('--journal-paper',bg);c.style.setProperty('--journal-ink',ink);
  const sections=[j.discovery?.trim()?`<div class="journal-section"><div class="journal-label">01 / 오늘의 작은 발견</div><div class="journal-lines">${esc(j.discovery.trim())}</div></div>`:'',j.next_action?.trim()?`<div class="journal-section"><div class="journal-label">02 / 다음에 다르게 해볼 것</div><div class="journal-lines">${esc(j.next_action.trim())}</div></div>`:''].join('');
  c.innerHTML=`<div class="journal-date"><span>${date.month}</span><strong>${date.day}</strong><small>${date.year}</small></div><div class="journal-body">${sections}<div class="journal-foot"><i>little by little.</i><button type="button" class="link-btn" data-edit>✎ 수정 · 색상</button></div></div>`;
@@ -229,7 +239,7 @@ function renderArchive(){
  }
 }
 function openJournal(j){const start=j.week_start,palette=palettes.map(([name,bg,ink])=>`<button type="button" class="journal-theme" data-bg="${bg}" data-ink="${ink}" title="${name}" style="background:${bg};color:${ink}">${esc(name)}</button>`).join('');
- drawer('나의 기록 수정',`<form id="journalForm"><p class="help">${esc(j.entry_date)} · ${esc(start)} 시작 주간</p><label for="j-discovery">오늘의 작은 발견</label><textarea id="j-discovery" name="discovery" rows="5">${esc(j.discovery)}</textarea><label for="j-next">다음에 다르게 해볼 것</label><textarea id="j-next" name="next_action" rows="4">${esc(j.next_action)}</textarea><div class="field"><label>기본 색상 팔레트</label><div class="journal-themes">${palette}</div></div><div class="two">${formField('배경 색상','bg_color',j.bg_color,'color')}${formField('날짜 색상','date_color',j.date_color,'color')}</div><button type="button" class="link-btn" id="randomTheme">↻ 랜덤 컬러</button><div class="buttons"><button class="primary" type="submit">수정 저장</button></div></form>`,root=>{
+ drawer('나의 기록 수정',`<form id="journalForm"><p class="help">${esc(journalCardDate(j))} · ${esc(start)} 시작 주간</p><label for="j-discovery">오늘의 작은 발견</label><textarea id="j-discovery" name="discovery" rows="5">${esc(j.discovery)}</textarea><label for="j-next">다음에 다르게 해볼 것</label><textarea id="j-next" name="next_action" rows="4">${esc(j.next_action)}</textarea><div class="field"><label>기본 색상 팔레트</label><div class="journal-themes">${palette}</div></div><div class="two">${formField('배경 색상','bg_color',j.bg_color,'color')}${formField('날짜 색상','date_color',j.date_color,'color')}</div><button type="button" class="link-btn" id="randomTheme">↻ 랜덤 컬러</button><div class="buttons"><button class="primary" type="submit">수정 저장</button></div></form>`,root=>{
  const f=root.querySelector('#journalForm'),apply=(bg,ink)=>{f.elements.namedItem('bg_color').value=bg;f.elements.namedItem('date_color').value=ink};
  root.querySelectorAll('[data-bg]').forEach(b=>b.onclick=()=>apply(b.dataset.bg,b.dataset.ink));
  root.querySelector('#randomTheme').onclick=()=>{const c=palettes[Math.floor(Math.random()*palettes.length)];apply(c[1],c[2])};
