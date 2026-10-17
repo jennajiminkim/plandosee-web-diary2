@@ -2,6 +2,11 @@
 import {requireUser,asUser,error,validId,validDate} from './db.js';
 const rules={missing_rule:'누락값 처리',duplicate_rule:'중복값 처리',outlier_rule:'이상값 처리',rounding_rule:'반올림 처리'};
 const bounded=(s,max)=>typeof s==='string'&&s.trim().length>0&&s.trim().length<=max;
+function validateMetric(e,value){
+ if(typeof value!=='number'||!Number.isFinite(value)||value<0||value>100000000)throw error('invalid_metric_value');
+ if(e.metric_name==='하루에 첫 행동을 실행한 할 일 수'&&e.metric_unit==='건'&&(!Number.isInteger(value)||value>3))throw error('first_step_value_must_be_0_to_3');
+ return Math.round(value*10000)/10000;
+}
 function send(res,status,body){res.setHeader('Cache-Control','private, no-store');res.setHeader('Content-Type','application/json; charset=utf-8');return res.status(status).json(body)}
 async function state(db,uid){
  const [one,rows,changes,clock]=await Promise.all([
@@ -19,7 +24,7 @@ async function state(db,uid){
   day3_day5_mean:after.length===3?average(after):null,
   comparison_ready:data.length===5&&Boolean(change)&&before.length===2&&after.length===3}};
 }
-async function run(db,uid,action,data){
+export async function run(db,uid,action,data){
  // Serializes concurrent duplicate daily-record/revision writes for this user.
  await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,20261016))',[uid]);
  const current=await state(db,uid);
@@ -39,12 +44,29 @@ async function run(db,uid,action,data){
   if(data.record_date!==current.today||!validDate(data.record_date))throw error('record_only_current_seoul_day');
   if(rows.some(row=>row.record_date===data.record_date))throw error('already_recorded_today',409);
   // A distinct real Korean calendar day per observation; no retroactive day data.
-  const raw=data.metric_value;
-  if(typeof raw!=='number'||!Number.isFinite(raw)||raw<0||raw>100000000)throw error('invalid_metric_value');
+  const value=validateMetric(e,data.metric_value);
   if(!bounded(data.note,1500))throw error('record_note_required');
   await db.query(
     'INSERT INTO public.pds_daily_records(user_id,experiment_id,record_date,metric_value,note) VALUES ($1,$2,$3,$4,$5)',
-    [uid,e.id,current.today,Math.round(raw*10000)/10000,data.note.trim()]);
+    [uid,e.id,current.today,value,data.note.trim()]);
+ }else if(action==='record.update'){
+  // Correction is allowed only for an EXISTING entry on the current Seoul day.
+  // This does not create another day or let the client backdate observation data.
+  if(!e)throw error('experiment_required',409);
+  if(data.record_date!==current.today||!validDate(data.record_date))throw error('record_only_current_seoul_day');
+  const todayIndex=rows.findIndex(row=>row.record_date===current.today);
+  if(todayIndex<0)throw error('today_record_not_found',404);
+  const existing=rows[todayIndex];
+  if(!validId(data.record_id)||data.record_id!==existing.id)throw error('not_found',404);
+  // Once Day 1–2 are used as evidence for the one-time rule revision, lock them.
+  if(current.change&&todayIndex<2)throw error('record_locked_after_revision',409);
+  const value=validateMetric(e,data.metric_value);
+  if(!bounded(data.note,1500))throw error('record_note_required');
+  const updated=await db.query(
+   'UPDATE public.pds_daily_records SET metric_value=$1,note=$2 WHERE id=$3 AND user_id=$4 AND experiment_id=$5 AND record_date=$6 RETURNING id',
+   [value,data.note.trim(),existing.id,uid,e.id,current.today]
+  );
+  if(updated.rowCount!==1)throw error('today_record_not_found',404);
  }else if(action==='revise'){
   if(!e||rows.length!==2||current.change)throw error('revision_requires_exactly_two_days',409);
   const field=data.rule_field;
