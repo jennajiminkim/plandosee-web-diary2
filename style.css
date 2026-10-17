@@ -386,7 +386,7 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
   margin:0 auto;
 }
 .time-ratio-value {
-  font:650 29px/1.1 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  font:650 23.67px/1.1 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
   fill:#293D70;
   font-variant-numeric:tabular-nums;
 }
@@ -439,8 +439,19 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
   gap:28px;
   min-width:0;
   height:100%;
-  border-left:1px solid #DCE4F1;
+  position:relative;
+  border-left:0;
   padding:22px 4px 22px 31px;
+}
+.time-value-list::before {
+  content:"";
+  position:absolute;
+  left:0;
+  top:3px;
+  bottom:3px;
+  width:1px;
+  background:#DCE4F1;
+  pointer-events:none;
 }
 .time-comparison {
   min-width:0;
@@ -464,7 +475,7 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 .time-comparison-values strong,
 .time-difference #diffTotal {
   font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
-  font-size:20px;
+  font-size:25.33px;
   font-weight:700;
   line-height:1.23;
   font-variant-numeric:tabular-nums;
@@ -552,15 +563,16 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
     padding:18px 0 0;
     gap:22px;
   }
+  .time-value-list::before {display:none}
   .time-section-label {font-size:11px}
   .time-comparison-values strong,.time-difference #diffTotal {
-    font-size:18px;
+    font-size:23.33px;
   }
   .time-summary-footer {margin-top:24px}
 }
 @container time-card (max-width:340px) {
   .time-comparison-values {gap:8px}
-  .time-comparison-values strong,.time-difference #diffTotal {font-size:16px}
+  .time-comparison-values strong,.time-difference #diffTotal {font-size:21.33px}
   .time-summary-footer {align-items:flex-start;flex-wrap:wrap}
   .time-explanation {flex-basis:100%;text-align:right}
 }
