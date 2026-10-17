@@ -32,12 +32,38 @@ function show(s){
  (s.change?'<hr><p><strong>규칙 변경 기록</strong> · '+escape(s.change.changed_at)+'</p><p>'+escape(s.change.old_rule)+' → '+escape(s.change.new_rule)+'</p><p>근거: '+escape(s.change.reason)+'</p>':'')+
  '<hr><p>Day 1–2 평균: '+(p.day1_day2_mean??'미완료')+' / Day 3–5 평균: '+(p.day3_day5_mean??'미완료')+'</p><p>'+(p.comparison_ready?'같은 지표의 5일 관찰 비교 완료':'비교는 5일 기록 후 표시합니다.')+'</p>';
 }
+function recordNotice(message,{failure=false}={}){
+ const feedback=$('recordFeedback');
+ feedback.hidden=false;
+ feedback.textContent=message;
+ feedback.style.borderColor=failure?'#e6b2b2':'#cbd9ef';
+ feedback.style.background=failure?'#fff2f2':'#f0f5ff';
+ feedback.style.color=failure?'#9a2525':'#253e65';
+ feedback.scrollIntoView?.({block:'nearest',behavior:'smooth'});
+}
 async function perform(action,data){
- if(busy)return;
- busy=true;$('status').textContent='서버에 확인 중...';
- try{show(await call(action,data));}
- catch(e){$('status').textContent='요청 실패: '+e.message}
- finally{busy=false}
+ const isRecord=action==='record';
+ if(busy){if(isRecord)recordNotice('이미 저장 요청을 처리하고 있습니다. 잠시 기다려 주세요.');return}
+ busy=true;
+ const button=isRecord?$('record').querySelector('button[type="submit"]'):null;
+ if(button)button.disabled=true;
+ $('status').textContent='서버에 확인 중...';
+ if(isRecord)recordNotice('오늘 기록을 저장하는 중입니다...');
+ try{
+  const result=await call(action,data);
+  show(result);
+  if(isRecord){
+   const msg='오늘('+result.today+') 기록이 저장되었습니다. ('+result.records.length+'/5일)';
+   recordNotice(msg);$('status').textContent=msg;
+  }
+ }catch(e){
+  const msg='요청 실패: '+e.message;
+  $('status').textContent=msg;
+  if(isRecord)recordNotice('오늘 기록을 저장하지 못했습니다. '+e.message+'. 입력한 내용은 그대로 유지됩니다.',{failure:true});
+ }finally{
+  busy=false;
+  if(button)button.disabled=false;
+ }
 }
 // Proposed observational protocol is a voluntary preset; nothing is saved until the user submits.
 const firstStepProtocol={
@@ -59,6 +85,11 @@ $('firstStepPreset').onclick=()=>{
  $('status').textContent='MY FIRST STEP 관찰 규칙을 채웠습니다. 내용을 확인한 뒤 아래의 「관찰 규칙 저장」 버튼을 눌러 주세요.';
 };
 $('setup').onsubmit=e=>{e.preventDefault();perform('create',Object.fromEntries(new FormData(e.target)))};
+$('record').addEventListener('invalid',e=>{
+ // Native form validation prevents submit; show the reason beside the save button.
+ const input=e.target;
+ recordNotice('입력 확인이 필요합니다: '+input.validationMessage,{failure:true});
+},true);
 $('record').onsubmit=e=>{e.preventDefault();if(!current)return;const data=Object.fromEntries(new FormData(e.target));data.metric_value=Number(data.metric_value);data.record_date=current.today;perform('record',data)};
 $('revision').onsubmit=e=>{e.preventDefault();perform('revise',Object.fromEntries(new FormData(e.target)))};
 call().then(show).catch(e=>$('status').textContent='로그인 또는 데이터 연결을 확인하세요: '+e.message);
