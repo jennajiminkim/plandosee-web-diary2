@@ -37,10 +37,15 @@ function show(s){
   form.elements.namedItem('note').value=todayRecord.note||'';
  }
  $('revision').hidden=n!==2||revised;
+ if(n===2&&!revised){
+  $('revision').querySelector('select[name="rule_field"]').value=firstStep?'plan_rule':'missing_rule';
+ }
  const p=s.progress;
  $('history').innerHTML=(s.records.length?s.records.map((r,i)=>'<p><strong>Day '+(i+1)+' · '+escape(r.record_date)+'</strong> — '+escape(r.metric_value)+' '+escape(e.metric_unit)+'<span style="display:block">'+escape(r.note)+'</span></p>').join(''):'<p>아직 기록이 없습니다.</p>')+
  (s.change?'<hr><p><strong>규칙 변경 기록</strong> · '+escape(s.change.changed_at)+'</p><p>'+escape(s.change.old_rule)+' → '+escape(s.change.new_rule)+'</p><p>근거: '+escape(s.change.reason)+'</p>':'')+
- '<hr><p>Day 1–2 평균: '+(p.day1_day2_mean??'미완료')+' / Day 3–5 평균: '+(p.day3_day5_mean??'미완료')+'</p><p>'+(p.comparison_ready?'같은 지표의 5일 관찰 비교 완료':'비교는 5일 기록 후 표시합니다.')+'</p>';
+ '<hr><p><strong>기록된 값 전체 합계:</strong> '+p.total_sum+' '+escape(e.metric_unit)+' · <strong>기록일 전체 평균:</strong> '+(p.total_mean??'미완료')+' '+escape(e.metric_unit)+' ('+p.measured_days+'일의 실제 측정값 기준)</p>'+
+ '<p>Day 1–2 합계/평균: '+p.day1_day2_sum+' / '+(p.day1_day2_mean??'미완료')+' · Day 3–5 합계/평균: '+p.day3_day5_sum+' / '+(p.day3_day5_mean??'미완료')+'</p>'+
+ '<p>'+(p.comparison_ready?'같은 지표와 단위·계산식의 5일 관찰 비교 완료':'비교는 서로 다른 실제 날짜의 5일 기록과 규칙 변경 후 표시합니다.')+'</p>';
 }
 function recordNotice(message,{failure=false}={}){
  const feedback=$('recordFeedback');
