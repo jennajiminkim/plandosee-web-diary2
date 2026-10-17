@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check app.js && node --check auth-ui.js && node --check api/auth.js && node --check api/db.js && node --check api/state.js && node --check api/health.js && node --test tests/*.test.mjs",
+    "check": "node --check app.js && node --check auth-ui.js && node --check experiment-ui.js && node --check api/auth.js && node --check api/db.js && node --check api/state.js && node --check api/experiment.js && node --check api/export.js && node --check api/import.js && node --check api/health.js && node --test tests/*.test.mjs",
     "test": "node --test tests/*.test.mjs",
     "dev": "vercel dev"
   },
