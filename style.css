@@ -330,9 +330,9 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 }
 .weekly .task-name button:hover .task-first-step-copy {color:#586d87}
 
-/* Task 7: time observation + plan reflection, a balanced 40:60 pair. */
+/* Task 7: time observation + plan reflection, a balanced 60:40 pair. */
 .insights-grid {
- display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);
+ display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);
  align-items:stretch;gap:16px;margin-top:26px;
  border-top:1px solid var(--line);padding-top:22px;
 }
@@ -351,11 +351,11 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 .insights-grid .plan-picker label {flex:none}
 .insights-grid .plan-picker select {flex:1;min-width:0;max-width:100%}
 .time-overview {
- display:grid;grid-template-columns:minmax(115px,145px) minmax(0,1fr);
+ display:grid;grid-template-columns:minmax(150px,210px) minmax(0,1fr);
  align-items:center;gap:14px;margin:8px 0 12px;
 }
 .time-donut-wrap {min-width:0;text-align:center}
-.time-donut {display:block;width:100%;max-width:145px;height:auto;margin:0 auto}
+.time-donut {display:block;width:100%;max-width:210px;height:auto;margin:0 auto}
 .time-ratio-value {font:500 34px/1.1 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;fill:#263b65}
 .time-ratio-caption {font:11px/1.2 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;fill:#8290ab}
 .time-ratio-hint {font-size:11px;color:var(--muted);margin:4px 0 0}
@@ -389,10 +389,10 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 @media(max-width:850px){
  .insights-grid {grid-template-columns:minmax(0,1fr)}
  .insights-grid > .insights-card {padding:18px}
- .time-overview {grid-template-columns:145px minmax(0,1fr)}
+ .time-overview {grid-template-columns:minmax(145px,210px) minmax(0,1fr)}
 }
 @media(max-width:420px){
- .time-overview {grid-template-columns:120px minmax(0,1fr);gap:9px}
+ .time-overview {grid-template-columns:minmax(105px,125px) minmax(0,1fr);gap:9px}
  .time-value-row strong {font-size:16px}
  .insights-grid .plan-picker {flex-wrap:wrap}
  .insights-grid .plan-picker select {flex-basis:100%}
