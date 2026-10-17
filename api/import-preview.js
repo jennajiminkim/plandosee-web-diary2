@@ -1,6 +1,6 @@
 import {requireUser,error,validId,validDate} from './db.js';
 
-const keys=['plans','versions','tasks','cells','logs','completions','reflections','journals','colors'];
+const keys=['plans','versions','tasks','cells','logs','completions','reflections','journals','dailyJournals','colors'];
 const uuid=validId;
 const accept=(row)=>row&&typeof row==='object'&&!Array.isArray(row);
 const validColor=v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v);
@@ -11,6 +11,8 @@ export function preview(body){
  const collections={},issues=[];
  let total=0;
  for(const key of keys){
+  // Older backups have no dailyJournals collection.
+  if(key==='dailyJournals'&&body[key]===undefined){collections[key]=[];continue}
   if(!Array.isArray(body[key])){point(issues,key+': missing_array');collections[key]=[];continue}
   if(body[key].length>3000)throw error('import_collection_too_large',413);
   collections[key]=body[key];
@@ -22,9 +24,9 @@ export function preview(body){
   }
  }
  if(total>10000)throw error('import_too_large',413);
- const {plans,versions,tasks,cells,logs,completions,reflections,journals,colors}=collections;
+ const {plans,versions,tasks,cells,logs,completions,reflections,journals,dailyJournals,colors}=collections;
  const ids={};
- for(const key of ['plans','versions','tasks','cells','logs','reflections','journals']){
+ for(const key of ['plans','versions','tasks','cells','logs','reflections','journals','dailyJournals']){
   ids[key]=new Set();
   for(const [i,row] of collections[key].entries()){
    if(!accept(row))continue;
@@ -57,6 +59,16 @@ export function preview(body){
   if(!accept(j))continue;
   if(!validDate(j.week_start)||new Date(j.week_start+'T12:00:00Z').getUTCDay()!==1)point(issues,'journals['+i+']: invalid_week_start');
   if(j.plan_id&&!owns('plans',j.plan_id))point(issues,'journals['+i+']: unknown_plan');
+ }
+ const dailyDates=new Set();
+ for(const [i,j] of dailyJournals.entries()){
+  if(!accept(j))continue;
+  if(!validDate(j.entry_date))point(issues,'dailyJournals['+i+']: invalid_entry_date');
+  if(j.plan_id&&!owns('plans',j.plan_id))point(issues,'dailyJournals['+i+']: unknown_plan');
+  if(!bounded(j.discovery,5000)||!bounded(j.next_action,2000))point(issues,'dailyJournals['+i+']: invalid_text_length');
+  if(!(j.discovery?.trim()||j.next_action?.trim()))point(issues,'dailyJournals['+i+']: empty_card');
+  if(dailyDates.has(j.entry_date))point(issues,'dailyJournals['+i+']: duplicate_date');
+  dailyDates.add(j.entry_date);
  }
  const swatches=new Set(),cellsSeen=new Set(),journalWeeks=new Set(),reflectionsSeen=new Set();
  for(const [i,c] of cells.entries()){
