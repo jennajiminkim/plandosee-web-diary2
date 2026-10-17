@@ -216,15 +216,16 @@ function openCell(t,day){
 
 function showPlanner(){ $('plannerPage').hidden=false;$('archivePage').hidden=true;$('navPlanner').classList.add('selected');$('navArchive').classList.remove('selected');window.scrollTo({top:0,behavior:'instant'}) }
 function showArchive(){ $('plannerPage').hidden=true;$('archivePage').hidden=false;$('navPlanner').classList.remove('selected');$('navArchive').classList.add('selected');renderArchive();window.scrollTo({top:0,behavior:'instant'}) }
-// Older weekly entries retained their original entry_date on later saves. Show the most recent
-// saved day in Seoul from updated_at, without mutating the user's existing records.
+// Archive cards retain their FIRST creation date, even when a weekly entry is edited.
+// created_at is immutable; entry_date may have been overwritten by an older app release.
 const journalSeoulDateFormat=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'});
 function journalCardDate(j){
- const stamp=Date.parse(j.updated_at||'');
+ const stamp=Date.parse(j.created_at||'');
  if(!Number.isFinite(stamp))return j.entry_date;
  const parts=Object.fromEntries(journalSeoulDateFormat.formatToParts(new Date(stamp)).map(p=>[p.type,p.value]));
- const saved=`${parts.year}-${parts.month}-${parts.day}`;
- return saved>j.entry_date?saved:j.entry_date;
+ const first=`${parts.year}-${parts.month}-${parts.day}`;
+ // For imported entries that predate their database creation, respect the older entry date.
+ return j.entry_date&&j.entry_date<first?j.entry_date:first;
 }
 function archiveDate(isoDate){const dt=new Date(isoDate+'T12:00:00');return {month:dt.toLocaleString('en-US',{month:'long'}).toUpperCase(),day:dt.getDate(),year:dt.getFullYear()}}
 function renderArchive(){
@@ -308,7 +309,7 @@ $('prev').onclick=()=>goWeek(addDays(week,-7));$('next').onclick=()=>goWeek(addD
  if(!answer&&!next){toast('한 문장만 작성해도 좋아요.');return}
  const current=weeklyJournal(),saveWeek=days()[0];const btn=$('saveReflection');btn.disabled=true;btn.textContent='저장 중...';
  try{const saved=await run('journal.save',{week_start:saveWeek,plan_id:selectedPlan||null,question:$('question').textContent,discovery:answer,next_action:next,bg_color:current?.bg_color||'#FAFAFA',date_color:current?.date_color||'#1E4099'});
- if(saved){if(days()[0]===saveWeek)resetReflectionEditor();archiveMonth=saved.entry_date.slice(0,7);showArchive();toast('돌아보기를 한 장의 기록으로 저장했습니다.')}}finally{btn.disabled=false;btn.textContent='돌아보기 저장'}
+ if(saved){if(days()[0]===saveWeek)resetReflectionEditor();archiveMonth=journalCardDate(saved).slice(0,7);showArchive();toast('돌아보기를 한 장의 기록으로 저장했습니다.')}}finally{btn.disabled=false;btn.textContent='돌아보기 저장'}
 };
 $('carry').onclick=async()=>{
  if(!selectedPlan){toast('계획을 선택하세요.');return}
