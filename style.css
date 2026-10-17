@@ -350,25 +350,105 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 }
 .insights-grid .plan-picker label {flex:none}
 .insights-grid .plan-picker select {flex:1;min-width:0;max-width:100%}
+/* Time observation: one quiet blue ring, with a thin mint overflow only above 100%. */
+.insights-grid > .metrics {
+  --time-blue:#6994EE;
+  --time-mint:#57CFB3;
+  --time-purple:#D9B9ED;
+  --time-track:#E9EDF5;
+  display:flex;
+  flex-direction:column;
+  container:time-card / inline-size;
+}
 .time-overview {
- display:grid;grid-template-columns:minmax(150px,210px) minmax(0,1fr);
- align-items:center;gap:14px;margin:8px 0 12px;
+  display:grid;
+  grid-template-columns:minmax(0,210px) minmax(0,1fr);
+  align-items:center;
+  gap:28px;
+  margin:18px 0 16px;
 }
 .time-donut-wrap {min-width:0;text-align:center}
 .time-donut {display:block;width:100%;max-width:210px;height:auto;margin:0 auto}
-.time-ratio-value {font:500 34px/1.1 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;fill:#263b65}
-.time-ratio-caption {font:11px/1.2 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;fill:#8290ab}
-.time-ratio-hint {font-size:11px;color:var(--muted);margin:4px 0 0}
-.time-value-list {display:flex;flex-direction:column;gap:10px;min-width:0}
-.time-value-row {border-bottom:1px solid #e9eef6;padding:0 0 9px;min-width:0}
-.time-value-row:last-child {border-bottom:0;padding-bottom:0}
-.time-value-row span {display:block;color:var(--muted);font-size:11px}
-.time-value-row strong {display:block;overflow-wrap:anywhere;font-size:18px;font-weight:550;line-height:1.4;color:#34415e}
-.time-value-row #estTotal {color:#2456ea}
-.time-value-row #actualTotal {color:#16ac85}
-.time-value-row #diffTotal {font-size:15px}
-.time-explanation {font-size:11px;line-height:1.7;color:var(--muted);margin:10px 0}
-.insights-grid #timeDetails {margin-top:5px}
+.time-ratio-value {
+  font:650 29px/1.1 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  fill:#293D70;
+  font-variant-numeric:tabular-nums;
+}
+.time-ratio-caption {
+  font:11px/1.2 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  fill:#7E8AA4;
+}
+.time-ratio-hint,.time-ratio-status {
+  font-size:11px;line-height:1.5;color:#7C88A0;margin:8px 0 0;
+}
+.time-ratio-status[hidden],.time-ratio-hint[hidden] {display:none!important}
+.time-value-list {
+  display:flex;
+  flex-direction:column;
+  gap:22px;
+  min-width:0;
+  border-left:1px solid #DFE6F2;
+  padding-left:22px;
+}
+.time-comparison {min-width:0;padding-bottom:19px;border-bottom:1px solid #E6ECF5}
+.time-section-label {margin:0 0 10px;color:#748199;font-size:12px;font-weight:600;line-height:1.5}
+.time-comparison-values {
+  display:flex;align-items:baseline;gap:12px;min-width:0;
+  white-space:nowrap;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(20px,1.8vw,26px);
+  line-height:1.2;
+  font-variant-numeric:lining-nums tabular-nums;
+}
+.time-comparison-values strong {font-weight:500;text-decoration:none;border:0;cursor:pointer}
+.time-comparison-values #estTotal {color:var(--time-blue)}
+.time-comparison-values #actualTotal {color:#26B795}
+.time-comparison-divider {
+  display:inline-block;width:1px;height:.92em;background:#B3BDCF;
+  align-self:center;flex:none;
+}
+.time-difference {min-width:0}
+.time-difference #diffTotal {
+  display:block;margin:0 0 15px;
+  color:#B481D3;font:500 32px/1.2 Georgia,"Times New Roman",serif;
+  font-variant-numeric:lining-nums tabular-nums;
+  text-decoration:none;border:0;cursor:pointer;
+}
+.time-diff-track {
+  width:100%;height:12px;overflow:hidden;border-radius:999px;
+  background:#F5F1F7;
+}
+.time-diff-bar {
+  display:block;height:100%;width:0;border-radius:inherit;
+  background:var(--time-purple);
+  transition:width .22s ease;
+}
+.time-summary-footer {
+  display:flex;align-items:center;justify-content:flex-end;
+  gap:12px;margin-top:auto;padding-top:18px;min-width:0;
+}
+.time-explanation {
+  margin:0;flex:1;min-width:0;text-align:right;
+  font-size:11px;line-height:1.6;color:#7A879F;
+}
+.insights-grid #timeDetails {
+  flex:none;margin:0;padding:6px 0 6px 5px;
+  font-size:12px;white-space:nowrap;
+}
+.time-comparison-values strong:focus-visible,.time-difference #diffTotal:focus-visible {
+  outline:2px solid #8EACFF;outline-offset:4px;border-radius:2px;
+}
+@media(prefers-reduced-motion:reduce){.time-diff-bar{transition:none}}
+@container time-card (max-width:560px) {
+  .time-overview {grid-template-columns:minmax(0,1fr);gap:17px;margin-top:12px}
+  .time-donut {max-width:200px}
+  .time-value-list {border-left:0;border-top:1px solid #DFE6F2;padding:17px 0 0;gap:17px}
+  .time-comparison-values {font-size:24px}
+}
+@container time-card (max-width:340px) {
+  .time-comparison-values {font-size:20px;gap:9px}
+  .time-difference #diffTotal {font-size:27px}
+}
 .insights-grid #reflectionStats .hint {font-size:12px;line-height:1.5;margin:0 0 14px}
 .insights-grid .count-cards {
  display:grid;grid-template-columns:minmax(0,1fr);gap:8px;
