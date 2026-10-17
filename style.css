@@ -329,3 +329,71 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
  overflow:hidden;overflow-wrap:anywhere;white-space:normal;
 }
 .weekly .task-name button:hover .task-first-step-copy {color:#586d87}
+
+/* Task 7: time observation + plan reflection, a balanced 40:60 pair. */
+.insights-grid {
+ display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);
+ align-items:stretch;gap:16px;margin-top:26px;
+ border-top:1px solid var(--line);padding-top:22px;
+}
+.insights-grid > .insights-card {
+ min-width:0;margin:0;padding:19px 22px 18px;
+ border:1px solid #dce5f1;background:var(--white);
+ border-radius:10px;
+}
+.insights-card .section-head {margin:0 0 12px;gap:10px}
+.insights-card .section-head h2 {color:#234b95}
+.insights-card .section-head small {font-size:11px;text-align:right}
+.insights-grid .plan-picker {
+ display:flex;align-items:center;gap:9px;max-width:100%;min-width:0;
+ margin:4px 0 14px;
+}
+.insights-grid .plan-picker label {flex:none}
+.insights-grid .plan-picker select {flex:1;min-width:0;max-width:100%}
+.time-overview {
+ display:grid;grid-template-columns:minmax(115px,145px) minmax(0,1fr);
+ align-items:center;gap:14px;margin:8px 0 12px;
+}
+.time-donut-wrap {min-width:0;text-align:center}
+.time-donut {display:block;width:100%;max-width:145px;height:auto;margin:0 auto}
+.time-ratio-value {font:500 34px/1.1 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;fill:#263b65}
+.time-ratio-caption {font:11px/1.2 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;fill:#8290ab}
+.time-ratio-hint {font-size:11px;color:var(--muted);margin:4px 0 0}
+.time-value-list {display:flex;flex-direction:column;gap:10px;min-width:0}
+.time-value-row {border-bottom:1px solid #e9eef6;padding:0 0 9px;min-width:0}
+.time-value-row:last-child {border-bottom:0;padding-bottom:0}
+.time-value-row span {display:block;color:var(--muted);font-size:11px}
+.time-value-row strong {display:block;overflow-wrap:anywhere;font-size:18px;font-weight:550;line-height:1.4;color:#34415e}
+.time-value-row #estTotal {color:#2456ea}
+.time-value-row #actualTotal {color:#16ac85}
+.time-value-row #diffTotal {font-size:15px}
+.time-explanation {font-size:11px;line-height:1.7;color:var(--muted);margin:10px 0}
+.insights-grid #timeDetails {margin-top:5px}
+.insights-grid #reflectionStats .hint {font-size:12px;line-height:1.5;margin:0 0 14px}
+.insights-grid .count-cards {
+ display:grid;grid-template-columns:minmax(0,1fr);gap:8px;
+ margin:0;
+}
+.insights-grid .count-cards button {
+ display:flex;flex-direction:row;align-items:center;justify-content:flex-start;
+ min-height:56px;gap:18px;padding:11px 18px;text-align:left;
+ border-color:#e0e6ef;border-radius:8px;background:#fbfcff;
+}
+.insights-grid .count-cards button:hover {background:#f1f6ff}
+.insights-grid .count-cards button:focus-visible {outline:2px solid #2456ea;outline-offset:2px}
+.insights-grid .count-cards strong {flex:none;min-width:30px;text-align:center;font-size:23px;line-height:1.1}
+.insights-grid .count-cards span {font-size:13px;color:#596b85}
+.insights-grid #evidence {margin:12px 0 0;border-radius:8px;max-height:225px;overflow:auto}
+.reflection-journal {border-top:1px solid var(--line);padding-top:9px;margin-top:24px}
+#reflectionStats[hidden],#reflectionContent[hidden],#timeRatioHint[hidden]{display:none!important}
+@media(max-width:850px){
+ .insights-grid {grid-template-columns:minmax(0,1fr)}
+ .insights-grid > .insights-card {padding:18px}
+ .time-overview {grid-template-columns:145px minmax(0,1fr)}
+}
+@media(max-width:420px){
+ .time-overview {grid-template-columns:120px minmax(0,1fr);gap:9px}
+ .time-value-row strong {font-size:16px}
+ .insights-grid .plan-picker {flex-wrap:wrap}
+ .insights-grid .plan-picker select {flex-basis:100%}
+}
