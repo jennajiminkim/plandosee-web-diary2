@@ -175,7 +175,7 @@ export async function perform(db,uid,action,data) {
    `INSERT INTO public.pds_weekly_reviews(user_id,week_start,entry_date,plan_id,question,discovery,next_action,bg_color,date_color)
     VALUES($1,$2,(now() AT TIME ZONE 'Asia/Seoul')::date,$3,$4,$5,$6,$7,$8)
     ON CONFLICT(user_id,week_start) DO UPDATE SET
-    // A weekly card shows the most recent save day in Seoul, not the day the week was first saved.
+    -- A weekly card shows the most recent save day in Seoul, not the day the week was first saved.
      entry_date=excluded.entry_date,
      plan_id=excluded.plan_id,question=excluded.question,discovery=excluded.discovery,next_action=excluded.next_action,
     bg_color=excluded.bg_color,date_color=excluded.date_color,updated_at=now() RETURNING *`,
