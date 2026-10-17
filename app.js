@@ -1,5 +1,5 @@
 const $=id=>document.getElementById(id);
-let state={plans:[],versions:[],tasks:[],cells:[],logs:[],completions:[],reflections:[],journals:[],colors:[]};
+let state={plans:[],versions:[],tasks:[],cells:[],logs:[],completions:[],reflections:[],journals:[],dailyJournals:[],colors:[]};
 let week=weekStart(new Date()),selectedPlan='',questionIndex=0,activeEvidence='',archiveMonth=new Date().toISOString().slice(0,7);
 const questions=['이번 주 스스로에게 수고했다고 말해주고 싶은 순간은?','이번 주 나를 미소 짓게 한 작은 순간은?','이번 주 누군가에게 고마웠던 순간은?','이번 주 작지만 시작할 수 있었던 일은?','이번 주 나를 위해 선택한 행동은?'];
 function pastelPeriod(hex,whiteWeight=0.16){
@@ -67,14 +67,14 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const activeTasks=()=>state.tasks.filter(t=>!t.deleted_at);
 const activePlans=()=>state.plans.filter(p=>!p.deleted_at);
 const effectivePriority=t=>state.plans.find(p=>p.id===t.plan_id)?.priority??t.priority;
-const weeklyJournal=()=>state.journals.find(j=>j.week_start===days()[0]);
+const todayJournal=()=>state.dailyJournals.find(j=>j.entry_date===todaySeoul());
 // The writing boxes are drafts, not a second copy of an archived journal.
 // On week changes, discard the old week's draft; saved notes stay in '나의 기록'.
-let reflectionDraftWeek=null;
+let reflectionDraftDay=null;
 function resetReflectionEditor(){
  $('answer').value='';
  $('improvement').value='';
- reflectionDraftWeek=days()[0];
+ reflectionDraftDay=todaySeoul();
 }
 const palettes=[['Original','#FAFAFA','#1E4099'],['Pale Blue','#EFF5FF','#2456EA'],['Pale Purple','#F4F0FF','#7155B9'],['Pale Green','#EBF8F1','#29765D']];
 const defaults=['#F5DCDC','#F6ECC4','#DCEBD9','#DCE9F7','#F0DBE9','#F3E3D3'];
@@ -85,7 +85,7 @@ const taskLogs=id=>state.logs.filter(x=>x.task_id===id);
 const cell=(id,day)=>state.cells.find(x=>x.task_id===id&&x.day===day);
 const toast=message=>{const t=$('toast');t.textContent=message;t.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.style.display='none',3200)};
 async function api(action,data){const r=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,data})});const v=await r.json();if(!r.ok)throw Error(v.error||'저장 실패');return v.result}
-async function load(){try{const r=await fetch('/api/state',{credentials:'same-origin',cache:'no-store'});const v=await r.json();if(!r.ok)throw Error(v.error);state={...state,...v,colors:v.colors||[],journals:v.journals||[]};if(selectedPlan&&!activePlans().some(p=>p.id===selectedPlan))selectedPlan='';if(!selectedPlan)selectedPlan=activePlans().find(p=>p.start_date<=days()[6]&&p.end_date>=days()[0])?.id||'';render();if(!$('archivePage').hidden)renderArchive();if(!document.body.classList.contains('planner-loaded')){document.body.classList.add('planner-loaded');document.dispatchEvent(new Event('planner:ready'));}}catch(e){if(!document.body.classList.contains('planner-loaded'))document.dispatchEvent(new CustomEvent('planner:error',{detail:{message:e.message}}));toast(e.message);$('rows').innerHTML=`<tr><td colspan="9" class="empty-state">${esc(e.message)}<br>README의 Supabase·Vercel 설정을 확인하세요.</td></tr>`}}
+async function load(){try{const r=await fetch('/api/state',{credentials:'same-origin',cache:'no-store'});const v=await r.json();if(!r.ok)throw Error(v.error);state={...state,...v,colors:v.colors||[],journals:v.journals||[],dailyJournals:v.dailyJournals||[]};if(selectedPlan&&!activePlans().some(p=>p.id===selectedPlan))selectedPlan='';if(!selectedPlan)selectedPlan=activePlans().find(p=>p.start_date<=days()[6]&&p.end_date>=days()[0])?.id||'';render();if(!$('archivePage').hidden)renderArchive();if(!document.body.classList.contains('planner-loaded')){document.body.classList.add('planner-loaded');document.dispatchEvent(new Event('planner:ready'));}}catch(e){if(!document.body.classList.contains('planner-loaded'))document.dispatchEvent(new CustomEvent('planner:error',{detail:{message:e.message}}));toast(e.message);$('rows').innerHTML=`<tr><td colspan="9" class="empty-state">${esc(e.message)}<br>README의 Supabase·Vercel 설정을 확인하세요.</td></tr>`}}
 const pendingActions=new Set();async function run(action,data,{reload=true}={}){const token=action==='task.complete'?`complete:${data.id}`:null;if(token&&pendingActions.has(token))return null;if(token)pendingActions.add(token);try{const result=await api(action,data);if(reload)await load();toast('저장되었습니다.');return result}catch(e){toast('저장 실패: '+e.message);return null}finally{if(token)pendingActions.delete(token)}}
 function weekTasks(){const from=days()[0],to=days()[6],query=$('search').value.toLowerCase().trim(),s=$('filterStatus').value,tag=$('filterTag').value;return activeTasks().filter(t=>{const p=state.plans.find(p=>p.id===t.plan_id);const inWeek=t.start_date&&t.end_date?t.start_date<=to&&t.end_date>=from:(t.due_date? t.due_date>=from&&t.due_date<=to:(p&&p.start_date<=to&&p.end_date>=from));const late=t.status!=='done'&&t.due_date&&t.due_date<todaySeoul();return inWeek&&(!query||`${t.title} ${t.tag} ${p?.title||''}`.toLowerCase().includes(query))&&(s==='all'||(s==='late'?late:t.status===s))&&(tag==='all'||t.tag===tag)}).sort((a,b)=>{const order=$('sort').value;if(order==='due')return (a.due_date||'9999').localeCompare(b.due_date||'9999')||effectivePriority(a)-effectivePriority(b)||a.created_at.localeCompare(b.created_at)||a.id.localeCompare(b.id);if(order==='title')return a.title.localeCompare(b.title,'ko')||effectivePriority(a)-effectivePriority(b)||a.created_at.localeCompare(b.created_at)||a.id.localeCompare(b.id);return effectivePriority(a)-effectivePriority(b)||a.created_at.localeCompare(b.created_at)||a.id.localeCompare(b.id)})}
 function renderPlanList(){const dd=days(),box=$('planList');if(!box)return;box.replaceChildren();const plans=activePlans().filter(p=>p.start_date<=dd[6]&&p.end_date>=dd[0]).sort((a,b)=>a.priority-b.priority||a.created_at.localeCompare(b.created_at)||a.id.localeCompare(b.id));if(!plans.length){box.innerHTML='<div class="empty-state">이 주에 연결된 계획이 없습니다. + 새 계획으로 시작해 보세요.</div>';return}for(const p of plans){const btn=document.createElement('button');btn.type='button';btn.className='plan-card'+(selectedPlan===p.id?' active':'');const count=planTasks(p.id).length;btn.innerHTML=`<strong>${esc(p.title)}</strong><small>${esc(p.start_date)} ~ ${esc(p.end_date)}</small><div class="meta"><span class="pill">우선 ${String(p.priority).padStart(2,'0')}</span><span class="pill">${count}개 할 일</span><span class="pill">예상 ${formatMinutes(p.estimated_minutes)}</span></div><small>${esc(p.success_criteria||'성공 기준 없음')}</small>`;btn.onclick=()=>{selectedPlan=p.id;render()};btn.ondblclick=()=>openPlan(p);box.append(btn)}}
@@ -116,7 +116,7 @@ function renderTimeRing(estimatedMinutes,actualMinutes){
  // The percentage is never clamped: when time exceeds 200%, the thin
  // outer ring is full but the central number still shows the true ratio.
 }
-function renderSummary(){const ts=planTasks(selectedPlan),logs=state.logs.filter(l=>ts.some(t=>t.id===l.task_id));const est=ts.reduce((s,t)=>s+t.estimated_minutes,0),actual=logs.reduce((s,l)=>s+l.actual_minutes,0);$('estTotal').textContent=formatSummaryHm(est);$('actualTotal').textContent=formatSummaryHm(actual);$('estLegend').textContent=formatSummaryHm(est);$('actualLegend').textContent=formatSummaryHm(actual);const delta=actual-est;$('diffTotal').textContent=formatSignedSummaryHm(delta);const relativeDifference=est>0?Math.abs(delta)/est*100:0;$('timeDiffBar').style.width=Math.min(100,relativeDifference)+'%';const comparison=delta>0?`예상보다 ${formatSummaryHm(delta)} 더 기록`:delta<0?`예상보다 ${formatSummaryHm(-delta)} 적게 기록`:'예상과 같은 시간 기록';$('timeDiffTrack').setAttribute('aria-label',est>0?`${comparison}. 예상 시간 대비 차이 ${Math.round(relativeDifference)}%`:'비교할 예상 시간이 없어 차이 비율을 표시할 수 없습니다.');for(const [id,label] of [['estTotal','계획한 시간'],['actualTotal','실제로 기록한 시간'],['diffTotal','예상 대비 시간 차이']]){$(id).setAttribute('aria-label',`${label} ${$(id).textContent}. 시간 집계 근거 기록 보기`)}renderTimeRing(est,actual);const stats={planned:ts,done:ts.filter(t=>t.status==='done'),late:ts.filter(t=>t.status!=='done'&&t.due_date&&t.due_date<todaySeoul()),blocked:ts.filter(t=>taskLogs(t.id).some(l=>l.blocker?.trim()))};$('nPlanned').textContent=stats.planned.length;$('nDone').textContent=stats.done.length;$('nLate').textContent=stats.late.length;$('nBlocked').textContent=stats.blocked.length;const r=weeklyJournal();if(reflectionDraftWeek!==days()[0])resetReflectionEditor();$('question').textContent=r?.question||questions[questionIndex];$('reflectionSaved').textContent=r?.discovery||r?.next_action?'저장된 주간 기록 · 나의 기록에서 수정 가능':'';if(activeEvidence)showEvidence(activeEvidence,stats);else $('evidence').hidden=true;}
+function renderSummary(){const ts=planTasks(selectedPlan),logs=state.logs.filter(l=>ts.some(t=>t.id===l.task_id));const est=ts.reduce((s,t)=>s+t.estimated_minutes,0),actual=logs.reduce((s,l)=>s+l.actual_minutes,0);$('estTotal').textContent=formatSummaryHm(est);$('actualTotal').textContent=formatSummaryHm(actual);$('estLegend').textContent=formatSummaryHm(est);$('actualLegend').textContent=formatSummaryHm(actual);const delta=actual-est;$('diffTotal').textContent=formatSignedSummaryHm(delta);const relativeDifference=est>0?Math.abs(delta)/est*100:0;$('timeDiffBar').style.width=Math.min(100,relativeDifference)+'%';const comparison=delta>0?`예상보다 ${formatSummaryHm(delta)} 더 기록`:delta<0?`예상보다 ${formatSummaryHm(-delta)} 적게 기록`:'예상과 같은 시간 기록';$('timeDiffTrack').setAttribute('aria-label',est>0?`${comparison}. 예상 시간 대비 차이 ${Math.round(relativeDifference)}%`:'비교할 예상 시간이 없어 차이 비율을 표시할 수 없습니다.');for(const [id,label] of [['estTotal','계획한 시간'],['actualTotal','실제로 기록한 시간'],['diffTotal','예상 대비 시간 차이']]){$(id).setAttribute('aria-label',`${label} ${$(id).textContent}. 시간 집계 근거 기록 보기`)}renderTimeRing(est,actual);const stats={planned:ts,done:ts.filter(t=>t.status==='done'),late:ts.filter(t=>t.status!=='done'&&t.due_date&&t.due_date<todaySeoul()),blocked:ts.filter(t=>taskLogs(t.id).some(l=>l.blocker?.trim()))};$('nPlanned').textContent=stats.planned.length;$('nDone').textContent=stats.done.length;$('nLate').textContent=stats.late.length;$('nBlocked').textContent=stats.blocked.length;const r=todayJournal();if(reflectionDraftDay!==todaySeoul())resetReflectionEditor();$('question').textContent=r?.question||questions[questionIndex];$('reflectionSaved').textContent=r?.discovery||r?.next_action?'오늘 저장한 카드 · 나의 기록에서 수정 가능':'';if(activeEvidence)showEvidence(activeEvidence,stats);else $('evidence').hidden=true;}
 function showEvidence(group,stats){activeEvidence=group;const box=$('evidence'),items=stats[group]||[];box.hidden=false;box.replaceChildren();const title=document.createElement('strong');title.textContent=({planned:'계획',done:'완료',late:'지연',blocked:'막힘'})[group]+' · 근거 기록';box.append(title);if(!items.length){box.append(document.createTextNode(' — 해당 기록 없음'));return}for(const t of items){const b=document.createElement('button');b.textContent=`${t.title} (${t.due_date||'마감일 없음'})`;b.onclick=()=>openTask(t);box.append(b)}}
 const formField=(label,name,value='',type='text',extra='')=>`<div class="field"><label for="f-${name}">${label}</label><input id="f-${name}" name="${name}" type="${type}" value="${esc(value)}" ${extra}></div>`;
 const selectField=(label,name,choices,value)=>`<div class="field"><label for="f-${name}">${label}</label><select id="f-${name}" name="${name}">${choices.map(([v,t])=>`<option value="${esc(v)}" ${v===String(value)?'selected':''}>${esc(t)}</option>`).join('')}</select></div>`;
@@ -220,6 +220,7 @@ function showArchive(){ $('plannerPage').hidden=true;$('archivePage').hidden=fal
 // created_at is immutable; entry_date may have been overwritten by an older app release.
 const journalSeoulDateFormat=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'});
 function journalCardDate(j){
+ if(j.cardType==='daily')return j.entry_date;
  const stamp=Date.parse(j.created_at||'');
  if(!Number.isFinite(stamp))return j.entry_date;
  const parts=Object.fromEntries(journalSeoulDateFormat.formatToParts(new Date(stamp)).map(p=>[p.type,p.value]));
@@ -230,7 +231,9 @@ function journalCardDate(j){
 function archiveDate(isoDate){const dt=new Date(isoDate+'T12:00:00');return {month:dt.toLocaleString('en-US',{month:'long'}).toUpperCase(),day:dt.getDate(),year:dt.getFullYear()}}
 function renderArchive(){
  const list=$('archiveCards');list.replaceChildren();$('archiveMonth').textContent=archiveMonth.replace('-', '. ');
- const journals=state.journals.filter(j=>journalCardDate(j).slice(0,7)===archiveMonth&&(j.discovery?.trim()||j.next_action?.trim())).sort((a,b)=>journalCardDate(b).localeCompare(journalCardDate(a))||b.week_start.localeCompare(a.week_start));
+ const journals=[...state.dailyJournals.map(j=>({...j,cardType:'daily'})),...state.journals.map(j=>({...j,cardType:'legacy'}))]
+   .filter(j=>journalCardDate(j).slice(0,7)===archiveMonth&&(j.discovery?.trim()||j.next_action?.trim()))
+   .sort((a,b)=>journalCardDate(b).localeCompare(journalCardDate(a))||(b.created_at||'').localeCompare(a.created_at||''));
  if(!journals.length){const div=document.createElement('div');div.className='archive-empty';div.textContent='';list.append(div);return}
  for(const j of journals){const date=archiveDate(journalCardDate(j)),bg=/^#[0-9a-f]{6}$/i.test(j.bg_color)?j.bg_color:'#FAFAFA',ink=/^#[0-9a-f]{6}$/i.test(j.date_color)?j.date_color:'#1E4099';
  const c=document.createElement('article');c.className='journal-card';c.style.setProperty('--journal-paper',bg);c.style.setProperty('--journal-ink',ink);
@@ -244,7 +247,7 @@ function openJournal(j){const start=j.week_start,palette=palettes.map(([name,bg,
  const f=root.querySelector('#journalForm'),apply=(bg,ink)=>{f.elements.namedItem('bg_color').value=bg;f.elements.namedItem('date_color').value=ink};
  root.querySelectorAll('[data-bg]').forEach(b=>b.onclick=()=>apply(b.dataset.bg,b.dataset.ink));
  root.querySelector('#randomTheme').onclick=()=>{const c=palettes[Math.floor(Math.random()*palettes.length)];apply(c[1],c[2])};
- f.onsubmit=async e=>{e.preventDefault();const v=await run('journal.save',{week_start:start,plan_id:j.plan_id&&!state.plans.find(p=>p.id===j.plan_id)?.deleted_at?j.plan_id:null,question:j.question,discovery:get(f,'discovery'),next_action:get(f,'next_action'),bg_color:get(f,'bg_color'),date_color:get(f,'date_color')});if(v){closeDrawer();renderArchive()}}
+ f.onsubmit=async e=>{e.preventDefault();const values={discovery:get(f,'discovery'),next_action:get(f,'next_action'),bg_color:get(f,'bg_color'),date_color:get(f,'date_color')};const isDaily=j.cardType==='daily';const payload=isDaily?{id:j.id,...values}:{week_start:start,plan_id:j.plan_id&&!state.plans.find(p=>p.id===j.plan_id)?.deleted_at?j.plan_id:null,question:j.question,...values};const v=await run(isDaily?'dailyJournal.update':'journal.save',payload);if(v){closeDrawer();renderArchive()}}
  })}
 $('navPlanner').onclick=showPlanner;$('navArchive').onclick=showArchive;
 $('archivePrev').onclick=()=>{const [y,m]=archiveMonth.split('-').map(Number);archiveMonth=iso(new Date(y,m-2,1)).slice(0,7);renderArchive()};
@@ -307,21 +310,21 @@ function goWeek(nextWeek){week=nextWeek;selectedPlan=activePlans().find(p=>p.sta
 $('prev').onclick=()=>goWeek(addDays(week,-7));$('next').onclick=()=>goWeek(addDays(week,7));$('today').onclick=()=>goWeek(weekStart(new Date(todaySeoul()+'T12:00:00')));$('search').oninput=render;['filterStatus','filterTag','sort'].forEach(id=>$(id).onchange=render);$('planSelect').onchange=e=>{selectedPlan=e.target.value;activeEvidence='';renderSummary()};$('addTask').onclick=()=>openTask();$('addPlan').onclick=()=>openPlan();$('addPlanTop').onclick=()=>openPlan();$('export').onclick=exportAll;$('exportTop').onclick=exportAll;const importButton=document.getElementById('importPreview');if(importButton)importButton.onclick=importPreview;$('shade').onclick=closeDrawer;$('closeDrawer').onclick=closeDrawer;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('overlay').hidden)closeDrawer()});$('toggleReflection').onclick=()=>{const journal=$('reflectionContent'),statistics=$('reflectionStats'),collapsed=!journal.hidden;journal.hidden=collapsed;statistics.hidden=collapsed;$('toggleReflection').textContent=collapsed?'펼치기 ⌄':'접기 ⌃';$('toggleReflection').setAttribute('aria-expanded',String(!collapsed))};document.querySelectorAll('[data-group]').forEach(b=>b.onclick=()=>{activeEvidence=activeEvidence===b.dataset.group?'':b.dataset.group;renderSummary()});$('switchQuestion').onclick=()=>{questionIndex=(questionIndex+1)%questions.length;$('question').textContent=questions[questionIndex]};$('timeDetails').onclick=()=>{const ts=planTasks(selectedPlan);drawer('시간 기록 상세',`<div class="panel"><h3>예상 시간은 할 일별 저장값을 단순 합산합니다.</h3><p>실제 시간은 실행 기록의 소요 시간을 합산합니다.</p></div>${ts.map(t=>`<div class="log-item"><strong>${esc(t.title)}</strong><p>예상 ${formatMinutes(t.estimated_minutes)} · 실제 ${formatMinutes(taskLogs(t.id).reduce((sum,l)=>sum+l.actual_minutes,0))}</p><button class="link-btn" data-id="${t.id}">상세 보기 →</button></div>`).join('')||'기록이 없습니다.'}`,root=>root.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>openTask(state.tasks.find(t=>t.id===b.dataset.id))))};$('saveReflection').onclick=async()=>{
  const answer=$('answer').value.trim(),next=$('improvement').value.trim();
  if(!answer&&!next){toast('한 문장만 작성해도 좋아요.');return}
- const current=weeklyJournal(),saveWeek=days()[0];const btn=$('saveReflection');btn.disabled=true;btn.textContent='저장 중...';
- try{const saved=await run('journal.save',{week_start:saveWeek,plan_id:selectedPlan||null,question:$('question').textContent,discovery:answer,next_action:next,bg_color:current?.bg_color||'#FAFAFA',date_color:current?.date_color||'#1E4099'});
- if(saved){if(days()[0]===saveWeek)resetReflectionEditor();archiveMonth=journalCardDate(saved).slice(0,7);showArchive();toast('돌아보기를 한 장의 기록으로 저장했습니다.')}}finally{btn.disabled=false;btn.textContent='돌아보기 저장'}
+ const current=todayJournal(),saveDay=todaySeoul();const btn=$('saveReflection');btn.disabled=true;btn.textContent='저장 중...';
+ try{const saved=await run('dailyJournal.save',{plan_id:selectedPlan||null,question:$('question').textContent,discovery:answer||current?.discovery||'',next_action:next||current?.next_action||'',bg_color:current?.bg_color||'#FAFAFA',date_color:current?.date_color||'#1E4099'});
+ if(saved){if(todaySeoul()===saveDay)resetReflectionEditor();archiveMonth=saved.entry_date.slice(0,7);showArchive();toast('오늘의 한문장 카드를 저장했습니다.')}}finally{btn.disabled=false;btn.textContent='돌아보기 저장'}
 };
 $('carry').onclick=async()=>{
  if(!selectedPlan){toast('계획을 선택하세요.');return}
- let journal=weeklyJournal();
+ let journal=todayJournal();
  const draftDiscovery=$('answer').value.trim(),draftNext=$('improvement').value.trim();
  // Empty writing boxes after save must NEVER overwrite an existing archived note.
  const effectiveNext=draftNext||journal?.next_action?.trim()||'';
  if(!effectiveNext){toast('다음에 다르게 해볼 내용을 먼저 입력해 주세요.');return}
  // Save only when there is new input or the journal needs to be linked to this plan.
  if(!journal||draftDiscovery||draftNext||journal.plan_id!==selectedPlan){
-  journal=await run('journal.save',{
-   week_start:days()[0],plan_id:selectedPlan,
+  journal=await run('dailyJournal.save',{
+   plan_id:selectedPlan,
    question:draftDiscovery?$('question').textContent:(journal?.question||$('question').textContent),
    discovery:draftDiscovery||journal?.discovery||'',
    next_action:effectiveNext,
