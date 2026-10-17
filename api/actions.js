@@ -165,6 +165,57 @@ export async function perform(db,uid,action,data) {
   await own(db,'pds_logs',uuid(data.id,'실행 기록 ID'),uid);
   result=await db.query('DELETE FROM public.pds_logs WHERE id=$1 AND user_id=$2 RETURNING id',[data.id,uid]);
   return {deleted:result.rowCount===1};
+ case 'dailyJournal.save': {
+   // The server, not the client clock or selected planner week, owns the diary date.
+   const clock=await db.query("SELECT (now() AT TIME ZONE 'Asia/Seoul')::date AS today");
+   const day=clock.rows[0].today;
+   const planId=data.plan_id?uuid(data.plan_id,'계획 ID'):null;
+   if(planId)await activePlan(db,planId,uid);
+   const discovery=text(data.discovery,5000).trim();
+   const nextAction=text(data.next_action,2000).trim();
+   if(!discovery&&!nextAction)throw error('작성한 글이 있어야 카드를 저장할 수 있습니다.');
+   const colors={
+     bg_color:palette(data.bg_color),
+     date_color:/^#[0-9a-f]{6}$/i.test(data.date_color||'')?data.date_color:'#1E4099'
+   };
+   result=await db.query(
+    `INSERT INTO public.pds_daily_journals
+      (user_id,entry_date,plan_id,question,discovery,next_action,bg_color,date_color)
+     VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+     ON CONFLICT(user_id,entry_date) DO UPDATE SET
+       plan_id=excluded.plan_id,question=excluded.question,
+       discovery=excluded.discovery,next_action=excluded.next_action,
+       bg_color=excluded.bg_color,date_color=excluded.date_color,updated_at=now()
+     RETURNING *`,
+    [uid,day,planId,text(data.question,350),discovery,nextAction,colors.bg_color,colors.date_color]);
+   if(planId){
+    await db.query(
+     `INSERT INTO public.pds_reflections(user_id,plan_id,question,answer,improvement,updated_at)
+      VALUES($1,$2,$3,$4,$5,now()) ON CONFLICT(user_id,plan_id) DO UPDATE SET
+      question=excluded.question,answer=excluded.answer,improvement=excluded.improvement,updated_at=now()`,
+     [uid,planId,text(data.question,350),discovery,nextAction]);
+   }
+   return result.rows[0];
+  }
+ case 'dailyJournal.update': {
+   const prior=await own(db,'pds_daily_journals',uuid(data.id,'기록 ID'),uid);
+   const discovery=text(data.discovery,5000).trim();
+   const nextAction=text(data.next_action,2000).trim();
+   if(!discovery&&!nextAction)throw error('작성한 글이 있어야 카드를 저장할 수 있습니다.');
+   const edits={
+     discovery,next_action:nextAction,bg_color:palette(data.bg_color),
+     date_color:/^#[0-9a-f]{6}$/i.test(data.date_color||'')?data.date_color:'#1E4099',
+     updated_at:new Date().toISOString()
+   };
+   const saved=await patch(db,'pds_daily_journals',prior.id,uid,edits);
+   if(prior.plan_id){
+    await db.query(
+     `UPDATE public.pds_reflections SET answer=$1,improvement=$2,updated_at=now()
+      WHERE user_id=$3 AND plan_id=$4`,
+     [discovery,nextAction,uid,prior.plan_id]);
+   }
+   return saved;
+  }
  case 'journal.save':
   if(!date(data.week_start)||new Date(data.week_start+'T12:00:00Z').getUTCDay()!==1)throw error('주간 시작일은 월요일이어야 합니다.');
   if(data.plan_id)await activePlan(db,uuid(data.plan_id),uid);
