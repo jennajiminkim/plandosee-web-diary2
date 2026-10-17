@@ -297,3 +297,35 @@ input[readonly]{background:#F4F7FC;color:#4d6088;cursor:not-allowed}
 }
 /* Priority numbers are informational; open task details from the task title. */
 .weekly td.rank .priority-badge {cursor:default}
+
+/* Task 7: one consistent color for priority and the compact theme badge. */
+.weekly .task-name button {
+ display:flex;flex-direction:column;align-items:flex-start;gap:0;
+ width:100%;max-width:100%;min-width:0;
+}
+.weekly .task-title-row {
+ display:flex;align-items:center;gap:7px;
+ max-width:100%;min-width:0;width:100%;
+}
+.weekly .task-title-row strong {
+ display:block;flex:0 1 auto;min-width:0;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ font-size:13px;line-height:1.5;
+}
+.weekly .task-theme {
+ display:inline-flex;flex:none;align-items:center;justify-content:center;
+ max-width:100%;border-radius:999px;padding:3px 9px;
+ font-size:10px;line-height:1.5;font-weight:650;
+ white-space:nowrap;
+}
+.weekly .task-first-step {
+ display:flex;gap:5px;align-items:flex-start;margin-top:5px;
+ color:#7d8998;font-size:11px;line-height:1.5;
+ max-width:100%;width:100%;min-width:0;text-align:left;
+}
+.weekly .task-first-step-arrow {flex:none;font-size:12px;line-height:1.4}
+.weekly .task-first-step-copy {
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+ overflow:hidden;overflow-wrap:anywhere;white-space:normal;
+}
+.weekly .task-name button:hover .task-first-step-copy {color:#586d87}
