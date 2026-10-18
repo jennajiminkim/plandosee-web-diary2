@@ -22,7 +22,7 @@ function makeAuthentication(responseOk,payload){
 function res(){return{statusCode:200,headers:{},setHeader(k,v){this.headers[k]=v;return this},status(n){this.statusCode=n;return this},json(v){this.body=v;return this}}}
 function makeState(requireUser){
  let dbCalls=0;
- const source=stateSrc.replace(/^import .*?;\s*$/m,'')
+ const source=stateSrc.replace(/^import .*?;\s*$/gm,'')
    .replace('export default async function handler','async function handler');
  const fn=new Function('requireUser','asUser','tables','error','perform',source+'\nreturn handler;')(
   requireUser,
