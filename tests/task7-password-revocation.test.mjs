@@ -21,18 +21,18 @@ function result(){
   json(x){this.body=x;return this}
  };
 }
-function make({enabled=true,validSession=true,allowTestUid=true,upstreamStatus=200,throwWithSecret=false}={}){
+function make({enabled=true,validSession=true,allowTestEmail=true,verifiedEmail='test-only@example.invalid',upstreamStatus=200,throwWithSecret=false}={}){
  const paths=[];
  const logs=[];
  const env={NEON_AUTH_BASE_URL:'https://test-placeholder.neon.tech/auth',NEON_AUTH_COOKIE_SECRET:'LOCAL_DUMMY_ONLY'};
  if(enabled)env.PASSWORD_CHANGE_TEST_ENABLED='true';
- if(allowTestUid)env.PASSWORD_CHANGE_TEST_USER_ID='user-local-test';
+ if(allowTestEmail)env.PASSWORD_CHANGE_TEST_EMAIL='test-only@example.invalid';
  const proxy=async(_base,request,path)=>{
   const body=await request.json().catch(()=>null);
   paths.push({path,body});
   if(throwWithSecret && path==='change-password')throw Error('simulated: '+CURRENT);
   if(path==='get-session'){
-   return new Response(validSession?JSON.stringify({user:{id:'user-local-test'},session:{id:'session-local-test'}}):'{}',
+   return new Response(validSession?JSON.stringify({user:{id:'user-local-test',email:verifiedEmail},session:{id:'session-local-test'}}):'{}',
      {status:validSession?200:401,headers:{'Content-Type':'application/json'}});
   }
   return new Response(upstreamStatus===200?'{}':JSON.stringify({error:'server error with fake marker '+CURRENT}),
@@ -73,10 +73,16 @@ test('rejects absent session before forwarding passwords',async()=>{
  assert.deepEqual(m.paths.map(x=>x.path),['get-session']);
 });
 test('feature flag alone cannot change a password without test-account allowlist',async()=>{
- const m=make({allowTestUid:false});
+ const m=make({allowTestEmail:false});
  const r=await invoke(m);
  assert.equal(r.statusCode,403);
  assert.deepEqual(r.body,{error:'test_account_only'});
+ assert.deepEqual(m.paths.map(x=>x.path),['get-session']);
+});
+test('different authenticated email is denied even with allowlist enabled',async()=>{
+ const m=make({verifiedEmail:'different@example.invalid'});
+ const r=await invoke(m);
+ assert.equal(r.statusCode,403);
  assert.deepEqual(m.paths.map(x=>x.path),['get-session']);
 });
 test('rejects invalid passwords and avoids forwarding secret values',async()=>{
