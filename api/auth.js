@@ -142,9 +142,11 @@ export default async function handler(req, res) {
       if (!confirmed.authenticated) {
         return res.status(401).json({ error: 'authentication_required' });
       }
-      // A feature flag alone is not enough. Require a server-side test-account allowlist.
-      const testUid = process.env.PASSWORD_CHANGE_TEST_USER_ID;
-      if (!testUid || confirmed.user.id !== testUid) {
+      // A feature flag alone is not enough: permit only the explicitly approved
+      // test account. Identity comes from the *verified* managed-auth session.
+      const approvedEmail = (process.env.PASSWORD_CHANGE_TEST_EMAIL || '').trim().toLowerCase();
+      const verifiedEmail = (confirmed.user.email || '').trim().toLowerCase();
+      if (!approvedEmail || !verifiedEmail || approvedEmail !== verifiedEmail) {
         return res.status(403).json({ error: 'test_account_only' });
       }
     }
