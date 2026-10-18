@@ -71,9 +71,24 @@ Neon Auth `neon_auth.account`의 `providerId='credential'` 데이터로 읽기 �
 - `password`, `token`, `cookie`, `secret`, `api_key`, `private_key`, `session`을 포함한 **필드 이름 발견 0건**. 원본 값 전수 민감정보 검사나 과거 Git 이력 감사의 대체는 아닙니다.
 - **판정: T07-C133 — 개인 기록+5일 관찰을 한 파일로 내보내기 실파일 검증 통과.** 현재 존재하는 기록을 내보낼 수 있다는 의미이며, 실제 5일 완주(C07)까지 의미하지 않습니다.
 
-## 7. 아직 모아야 할 실제 결과 — 미검증
+## 7. T07-C98 · C99 — 중복 가입 및 로그인 오류 메시지 실제 HTTP 검증 (2026-10-18)
 
-- 가입한 같은 이메일 중복 가입 HTTP, 틀린 암호와 존재하지 않는 이메일의 동일 안내 메시지 실측.
+사용자가 운영 사이트 Chrome DevTools **Network → Fetch/XHR → Preview/Headers**에서 직접 확인하고, **응답 Preview 스크린샷 3장 + Request URL·Method·Status Code 텍스트**를 제공했습니다. 이메일·비밀번호·쿠키·세션·요청 Payload는 공개 저장소에 싣지 않습니다.
+
+| 검사 | 요청 | 실제 HTTP 상태 | 응답 본문 | 판정 |
+| --- | --- | --- | --- | --- |
+| A: 기존 계정 이메일로 중복 회원가입 | `POST https://plandosee-web-diary2.vercel.app/api/auth?action=signup` | **400 Bad Request** | `{"error":"가입을 완료할 수 없습니다. 이메일과 입력 정보를 확인해 주세요."}` | **PASS (C98)** |
+| B: 기존 계정 이메일 + 잘못된 비밀번호 | `POST https://plandosee-web-diary2.vercel.app/api/auth?action=login` | **401 Unauthorized** | `{"error":"이메일 또는 비밀번호를 확인해 주세요."}` | **PASS (C99, B)** |
+| C: 존재하지 않는 이메일 + 잘못된 비밀번호 | `POST https://plandosee-web-diary2.vercel.app/api/auth?action=login` | **401 Unauthorized** | `{"error":"이메일 또는 비밀번호를 확인해 주세요."}` | **PASS (C99, C)** |
+
+- **B와 C의 경로·메서드·HTTP 상태·응답 문구가 완전히 같음**을 사용자가 확인했습니다.
+- 운영 Neon `neon_auth."user"` 테이블에 `user_email_key` **UNIQUE(email)** 인덱스가 실제 존재하는 것도 별도로 읽기 전용 확인했습니다. 실제 중복 가입 400 응답과 DB UNIQUE 제약이 함께 중복 가입 방지의 근거입니다.
+- 검증 한계: 이 결과는 동일 이메일 중복 가입 1회 및 로그인 실패 2회에 대한 실측입니다. 대소문자 변형/동시 가입 레이스·속도 제한의 전체 동작까지 증명하지는 않습니다.
+- **민감정보 처리:** 스크린샷 원본은 대화 첨부로 검토했으며 공개 GitHub에 게시하지 않았습니다. 요청/응답 전문에서 인증 비밀값이나 실제 계정 이메일은 공개하지 않습니다.
+
+## 8. 아직 모아야 할 실제 결과 — 미검증
+
+- **C98 · C99 완료:** 위 7절 실제 HTTP 400/401 및 로그인 오류 동일성 증거 확보. 동일 검사를 반복하지 않음.
 - 세션의 **실제 운영 TTL**, 비밀번호 변경 후 과거 세션 무효화.
 - 서버 로그·화면·네트워크 전체에서 원문 암호 없음 확인(해시 실측과 별도).
 - 목록 전체 양방향 격리/다른 ID 주입/거절 전후 실제 건수 확인.
