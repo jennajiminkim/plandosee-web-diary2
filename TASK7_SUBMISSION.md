@@ -10,6 +10,7 @@
 - 소스: https://github.com/jennajiminkim/plandosee-web-diary2
 - 잠긴 5일 관찰: https://plandosee-web-diary2.vercel.app/experiment.html
 - 마스킹된 검증 기록: [evidence/task7-auth-verification.md](evidence/task7-auth-verification.md)
+- **2026-10-18 추가 감사:** [GitHub 전체 확인 브랜치 비밀정보 패턴 검사 · Better Auth/Neon 해시 근거 · 7건 마스킹 HTTP 요약](evidence/task7-secret-history-hash-and-http-audit.md) — 실제 비밀값 비공개, 검사 한계 명시.
 
 ## ① 무엇으로 붙였나
 
@@ -57,9 +58,9 @@ DB 접근은 `api/db.js`에서 로그인한 ID를 읽고 `SET LOCAL ROLE pds_run
 
 **2026-10-18 실제 HTTP 검증 추가 완료:** T07-C98 중복 가입 `POST /api/auth?action=signup` → HTTP 400; T07-C99 기존 이메일+틀린 비밀번호 및 없는 이메일+틀린 비밀번호 각각 `POST /api/auth?action=login` → HTTP 401, 동일 오류 문구. 실제 Chrome Network Preview 스크린샷 3장과 요청 메서드·상태를 확인했으며 마스킹된 요청/응답은 [검증 기록 7절](evidence/task7-auth-verification.md)에 정리했습니다. 동일 검사는 재실행하지 않습니다.
 
-**2026-10-18 실제 Production 로그 검사:** Vercel Request Logs에서 최근 1시간의 요청 로그 21건이 표시되는 것을 확인한 뒤 `password`와 `session_token=`을 각각 검색한 결과 **모두 0건**. [C105·C106의 범위 한정 증거](evidence/task7-auth-verification.md)를 확보했습니다. 이는 전체 기간·모든 비밀정보 표현의 무유출 보장은 아닙니다.
+**2026-10-18 실제 Production 로그 검사:** Vercel Request Logs에서 최근 1시간의 요청 로그 21건이 표시되는 것을 확인한 뒤 `password`와 `session_token=`을 각각 검색한 결과 **모두 0건**. [C105·C106의 범위 한정 증거](evidence/task7-auth-verification.md)를 확보했습니다. 추가 24시간 Runtime Logs 질의는 도구 오류로 결과를 확보하지 못해 **0건이라고 주장하지 않습니다**. 전체 기간·다른 비밀정보 표현은 미검증입니다.
 
-**여전히 필요한 증거:** 관리형 비밀번호 저장 알고리즘 검증(C101~103), 자연 만료된 세션 쿠키의 재요청(C111). **C114는 2026-10-18 별도 시험 계정 Preview에서 비밀번호 변경 성공 후 기존 시크릿 세션의 `GET /api/state` HTTP 200→401로 실측 통과**, 로그 전체·브라우저 화면·Network 응답의 민감정보 점검, 추가 마스킹 요청·응답 쌍(C129). C122·C123·C125는 실측 완료이므로 반복하지 않습니다.
+**여전히 필요한 증거:** 관리형 비밀번호 저장의 *운영 서버 알고리즘 직접 설정 근거*(C101~103; 기본 scrypt 문서와 저장값 형식은 확인), 자연 만료된 세션 쿠키의 재요청(C111, 사용자가 시간 부족으로 **미실시 결정**). **C114는 2026-10-18 Preview에서 다른 시크릿 세션의 `GET /api/state` HTTP 200→401로 실측 통과**했습니다. C46은 9개 브랜치 누적 193개 커밋의 **비밀값 패턴 검사에서 실제 의심 징후 0건**이었으나 전수 보증은 아니며, C129는 **7건 마스킹 재구성 요약 작성**과 달리 원본 요청·응답 전문은 일부 미보존입니다. 로그 전체·브라우저 화면·Network 응답의 민감정보 전수 검사는 미완료입니다. [추가 감사](evidence/task7-secret-history-hash-and-http-audit.md). C122·C123·C125는 반복하지 않습니다.
 
 Better Auth 문서상 기본 세션 TTL은 **7일**(`expiresIn=604800`), `updateAge` 기본값 **1일**입니다. 이 값은 **라이브러리 기본값**이지 현재 Neon 관리형 서비스의 실측 설정이 아닙니다. 참고: https://better-auth.com/docs/concepts/session-management
 
@@ -98,15 +99,15 @@ Better Auth 문서상 기본 세션 TTL은 **7일**(`expiresIn=604800`), `update
 | C01 / C03 / C39 / C40 | **공개 소스 확인 / 화면 새 시크릿창 실측 필요** | GitHub 공개 저장소 확인; 로그인 첫 화면 구현 |
 | C77 / C78 | **C78 코드 조상 관계 통과 / C77 실제 최종 제출 대조 필요** | T06 `64452592...`이 T07 `main` 조상 |
 | C91–C100 | **중복 가입(C98)·오류 메시지 동일성(C99) HTTP 실측 통과 / 데이터 이전 증거 일부 부족** | 2026-10-18 HTTP 400·401·401과 두 401의 동일 응답 확인. T06 이전 대조(C100)는 별도 |
-| C101–C107 | **서로 다른 해시·솔트 실측 통과 / C105·C106 Production 로그 제한 범위 문자열 검색 0건 / 전체 로그 점검 일부 미완료** | 최근 1시간 로그 21건 확인 후 `password`, `session_token=` 각각 검색 0건. 전체 기간 보장은 아님. [증거](evidence/task7-auth-verification.md) |
+| C101–C107 | **C104 해시·솔트 차이 실측 통과 / 기본 scrypt 공식문서 확인 / Neon 운영 해시 설정 미확정 / C105·C106 제한 범위 로그 실측** | 최근 1시간 21건·검색어 2개 0건, 추가 24시간 조회 실패. [기존 증거](evidence/task7-auth-verification.md) · [추가 감사](evidence/task7-secret-history-hash-and-http-audit.md) |
 | C108–C115 | **로그아웃 후 쿠키 재사용 401 및 C114 비밀번호 변경 후 다른 세션 200→401 실측 통과 / C111 자연 만료 차단 미완료** | 2026-10-18 별도 시험 계정 Preview, 변경 전 GET 200→변경 성공→기존 시크릿 세션 GET 401. [검증 기록](evidence/task7-auth-verification.md) |
 | C116–C126 | **양방향 404·목록 격리(C125)·ID 변조 방어(C123)·수정/삭제 거절 전후 DB 불변(C122) 실측 통과** / 일부 원본 요청 전문 추가 정리 필요 | C122: 14:35:11→14:41:37 KST, A 전용 테스트 기록 3→3건, B 2→2건, 두 계정 상태 지문 동일, PATCH/DELETE 양방향 각 404. [증거](evidence/task7-auth-verification.md) |
-| C127–C131 | **6개 항목 작성 / 5종 상세 요청·응답·원본 비밀 미노출 점검 일부 미완성** | 이 설명서 |
+| C127–C131 | **6개 제출 항목 작성 / 기존 실제 HTTP 결과 7건을 비밀 없이 마스킹 재구성 / 당시 원본 요청·응답 전문은 일부 미보존** | [C129 마스킹 요약](evidence/task7-secret-history-hash-and-http-audit.md) — 요약과 원본 캡처를 혼동하지 않음 |
 | C04–C08 / C23–C27 | **1일차 지표/단위/규칙 기록, 5일 완료 전** | 서버 서울 날짜 기록 |
 | C07 / C09–C15 | **실제 날짜 5일 + Day 2 뒤 계획 규칙 변경은 아직 실행 전** | 코드에서 날짜/순서 제한 |
 | C132 | **전체 합계·평균 표시 구현 / 실측 5일의 손계산 대조 미완성** | 실제 데이터 필요 |
 | C133 | **2026-10-18 운영 다운로드 JSON 실파일 검증 통과:** 13개 배열(89건) 포함, 실험 1건·관찰 1건·규칙변경 0건, 참조 누락 0건 | `api/export.js`, [증거](evidence/task7-auth-verification.md) |
 | C134 | **미완성** | 앱 내 계정 삭제 및 DB 데이터 연계 삭제 미구현 |
-| C46 | **현재 제출문에 인증 비밀 원문 기재 없음 / 전체 Git 과거 이력의 비밀 노출 감사 미완** | 새 시크릿창·마스킹 점검 필요 |
+| C46 | **확인된 9개 브랜치·193개 커밋의 고신뢰 비밀정보 패턴 검사에서 실제 노출 의심 0건** | 테스트 코드의 모의 비밀 변수 할당은 별도 분류. [검증 근거 및 범위](evidence/task7-secret-history-hash-and-http-audit.md) — 플랫폼 전수 탐지·숨은 표현은 보증하지 않음 |
 
 **제출 전 확인:** 5일의 실제 기록·계획 변경과 계정 삭제, 마스킹 증거 자료가 모두 충족되었는지 확인하고 완료 항목만 체크합니다.
