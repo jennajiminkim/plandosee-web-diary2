@@ -21,11 +21,12 @@ function result(){
   json(x){this.body=x;return this}
  };
 }
-function make({enabled=true,validSession=true,upstreamStatus=200,throwWithSecret=false}={}){
+function make({enabled=true,validSession=true,allowTestUid=true,upstreamStatus=200,throwWithSecret=false}={}){
  const paths=[];
  const logs=[];
  const env={NEON_AUTH_BASE_URL:'https://test-placeholder.neon.tech/auth',NEON_AUTH_COOKIE_SECRET:'LOCAL_DUMMY_ONLY'};
  if(enabled)env.PASSWORD_CHANGE_TEST_ENABLED='true';
+ if(allowTestUid)env.PASSWORD_CHANGE_TEST_USER_ID='user-local-test';
  const proxy=async(_base,request,path)=>{
   const body=await request.json().catch(()=>null);
   paths.push({path,body});
@@ -69,6 +70,13 @@ test('rejects absent session before forwarding passwords',async()=>{
  const r=await invoke(m);
  assert.equal(r.statusCode,401);
  assert.deepEqual(r.body,{error:'authentication_required'});
+ assert.deepEqual(m.paths.map(x=>x.path),['get-session']);
+});
+test('feature flag alone cannot change a password without test-account allowlist',async()=>{
+ const m=make({allowTestUid:false});
+ const r=await invoke(m);
+ assert.equal(r.statusCode,403);
+ assert.deepEqual(r.body,{error:'test_account_only'});
  assert.deepEqual(m.paths.map(x=>x.path),['get-session']);
 });
 test('rejects invalid passwords and avoids forwarding secret values',async()=>{
