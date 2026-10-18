@@ -142,6 +142,11 @@ export default async function handler(req, res) {
       if (!confirmed.authenticated) {
         return res.status(401).json({ error: 'authentication_required' });
       }
+      // A feature flag alone is not enough. Require a server-side test-account allowlist.
+      const testUid = process.env.PASSWORD_CHANGE_TEST_USER_ID;
+      if (!testUid || confirmed.user.id !== testUid) {
+        return res.status(403).json({ error: 'test_account_only' });
+      }
     }
     const upstream = await neonAuth(req, action, body);
     const issued = upstream.headers.getSetCookie?.() || [];
