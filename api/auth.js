@@ -7,7 +7,8 @@ const endpoints = {
   signup: { method: 'POST', path: '/sign-up/email' },
   login: { method: 'POST', path: '/sign-in/email' },
   logout: { method: 'POST', path: '/sign-out' },
-  session: { method: 'GET', path: '/get-session' }
+  session: { method: 'GET', path: '/get-session' },
+  changePassword: { method: 'POST', path: '/change-password' }
 };
 
 function originOf(req) {
@@ -87,6 +88,10 @@ export default async function handler(req, res) {
   const action = typeof req.query?.action === 'string' ? req.query.action : '';
   const spec = endpoints[action];
   if (!spec || req.method !== spec.method) return res.status(404).json({ error: 'not_found' });
+  // Always disabled unless explicitly enabled for isolated test-account verification.
+  if (action === 'changePassword' && process.env.PASSWORD_CHANGE_TEST_ENABLED !== 'true') {
+    return res.status(404).json({ error: 'not_found' });
+  }
 
   if (spec.method === 'POST') {
     const origin = originOf(req);
@@ -101,18 +106,49 @@ export default async function handler(req, res) {
       const raw = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
       if (Buffer.byteLength(raw) > MAX_BODY) return res.status(413).json({ error: 'request_too_large' });
       body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
-      if (action === 'signup') {
-        if (typeof body.name !== 'string' || body.name.trim().length < 1 || body.name.length > 80) {
+      if (action === 'changePassword') {
+        if (!body || typeof body !== 'object' || Array.isArray(body) ||
+            typeof body.currentPassword !== 'string' ||
+            typeof body.newPassword !== 'string' ||
+            body.currentPassword.length < 8 || body.currentPassword.length > 128 ||
+            body.newPassword.length < 8 || body.newPassword.length > 128 ||
+            body.currentPassword === body.newPassword) {
           return res.status(400).json({ error: 'invalid_input' });
         }
+        // Never let the browser disable other-session revocation for this test flow.
+        body = {
+          currentPassword: body.currentPassword,
+          newPassword: body.newPassword,
+          revokeOtherSessions: true
+        };
+      } else {
+        if (action === 'signup') {
+          if (typeof body.name !== 'string' || body.name.trim().length < 1 || body.name.length > 80) {
+            return res.status(400).json({ error: 'invalid_input' });
+          }
+        }
+        if (typeof body.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email) ||
+            typeof body.password !== 'string' || body.password.length < 8 || body.password.length > 128) {
+          return res.status(400).json({ error: 'invalid_input' });
+        }
+        body = action === 'signup'
+          ? { name: body.name.trim(), email: body.email.trim(), password: body.password }
+          : { email: body.email.trim(), password: body.password };
       }
-      if (typeof body.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email) ||
-          typeof body.password !== 'string' || body.password.length < 8 || body.password.length > 128) {
-        return res.status(400).json({ error: 'invalid_input' });
+    }
+    if (action === 'changePassword') {
+      const live = await neonAuth(req, 'session');
+      const confirmed = live.ok ? sessionInfo(await responseJSON(live)) : { authenticated: false };
+      if (!confirmed.authenticated) {
+        return res.status(401).json({ error: 'authentication_required' });
       }
-      body = action === 'signup'
-        ? { name: body.name.trim(), email: body.email.trim(), password: body.password }
-        : { email: body.email.trim(), password: body.password };
+      // A feature flag alone is not enough: permit only the explicitly approved
+      // test account. Identity comes from the *verified* managed-auth session.
+      const approvedEmail = (process.env.PASSWORD_CHANGE_TEST_EMAIL || '').trim().toLowerCase();
+      const verifiedEmail = (confirmed.user.email || '').trim().toLowerCase();
+      if (!approvedEmail || !verifiedEmail || approvedEmail !== verifiedEmail) {
+        return res.status(403).json({ error: 'test_account_only' });
+      }
     }
     const upstream = await neonAuth(req, action, body);
     const issued = upstream.headers.getSetCookie?.() || [];
@@ -121,6 +157,7 @@ export default async function handler(req, res) {
     if (!upstream.ok) {
       if (action === 'login') return res.status(401).json({ error: '이메일 또는 비밀번호를 확인해 주세요.' });
       if (action === 'signup') return res.status(400).json({ error: '가입을 완료할 수 없습니다. 이메일과 입력 정보를 확인해 주세요.' });
+      if (action === 'changePassword') return res.status(401).json({ error: 'password_change_rejected' });
       return res.status(401).json({ error: 'not_authenticated' });
     }
     if (action === 'session') {
