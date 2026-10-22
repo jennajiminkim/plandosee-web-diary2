@@ -1,3 +1,5 @@
+> **시점 안내:** 아래는 후속 실삭제 이전의 검사 기록입니다. 현재 완료·미완료 판정은 [재제출 점검](task7-submission-readiness-2026-10-22.md)과 [최종 삭제 검증](task7-final-deletion-verification-2026-10-22.md)을 따릅니다. Vercel 접근은 복구되어 Preview 실측을 마쳤습니다.
+
 # 과제 7 남은 검증 재점검 — 2026-10-22 (Asia/Seoul)
 
 ## 후속 사용자 확인 — C77·C132·C134 완료 반영
@@ -45,7 +47,7 @@ GitHub 최신 원격 브랜치와 기존 증거를 읽고, 운영 Neon에는 SEL
 
 `COUNT=5`, `COUNT(DISTINCT record_date)=5`, `COUNT(metric_value)=5`였다. 변경 전후 일수가 다르므로 단순 합계만으로 실행 정도가 같다고 해석하지 않는다. 변경 후 평균은 증가하지 않았다. 짧은 관찰만으로 규칙 변경의 인과적 효과를 확정하지 않는다.
 
-현재 `api/experiment.js`의 `state()`에 실제 실측값을 식별자/개인 메모 없이 대입하고 `experiment-ui.js`의 실제 `show()` 함수를 최소 DOM에서 실행해 위 문구가 표시됨을 검증했다. 테스트: [observation-display.test.mjs](../tests/observation-display.test.mjs).
+현재 `api/experiment.js`의 `state()`에 실제 실측값을 식별자/개인 메모 없이 대입하고 `experiment-ui.js`의 실제 `show()` 함수를 최소 DOM에서 실행해 위 문구가 표시됨을 검증했다. 테스트: [observation-display.test.mjs](https://github.com/jennajiminkim/plandosee-web-diary2/blob/9646ee799b284498d5dd9c688345a86e46075383/tests/observation-display.test.mjs).
 
 운영 `https://plandosee-web-diary2.vercel.app/experiment-ui.js`를 GET 200으로 받았고, 테스트한 표시 함수와 동일함을 비교했다. 운영 JS SHA-256: `793a269336555e095f751e0461c82a8d0a428d44c175d79dafa5c3ab454c80cb`.
 
@@ -95,7 +97,7 @@ T06 저장소의 현재 main은 여전히 `644525924bbab27a2384fdcf54f1ba6293361
 ### 실제 이번에 수행한 범위
 
 - 새로 fetch한 원격 브랜치 **10개**, 모든 로컬 참조에서 도달 가능한 **206개 커밋**의 고유 텍스트 blob **240개**를 검사했다. 당시 binary 제외 **0개**.
-- 고신뢰 패턴: GitHub/AWS/Stripe/OpenAI 키 형태, PEM 개인키, JWT, 비밀번호를 포함한 DB/캐시 접속 URI. **검출 0건**. 스캐너: [audit-secrets.py](../scripts/audit-secrets.py).
+- 고신뢰 패턴: GitHub/AWS/Stripe/OpenAI 키 형태, PEM 개인키, JWT, 비밀번호를 포함한 DB/캐시 접속 URI. **검출 0건**. 스캐너: [audit-secrets.py](https://github.com/jennajiminkim/plandosee-web-diary2/blob/9646ee799b284498d5dd9c688345a86e46075383/scripts/audit-secrets.py).
 - 소스의 `console` 호출과 응답 경로를 검토했다. 추가 회귀 검사에서 제공자 성공/실패 payload 및 예외에 **가짜 민감정보 sentinel**을 넣었을 때 인증 핸들러의 반환 JSON·애플리케이션 로그에 그 문자열이 나오지 않음을 확인했다. 실제 비밀정보는 테스트에 쓰지 않았다.
 - 현재 공개 증거의 마스킹 표기·원본 미보존/재구성 구분을 검토했다.
 - `npm run check`: **38개 통과, 실패 0개**. 앞선 36개에 실제 관찰값 표시 검사와 인증 응답/로그 회귀 검사를 추가했다.
