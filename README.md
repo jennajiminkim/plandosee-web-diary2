@@ -259,3 +259,18 @@
 - [supabase/](supabase/): 과제 6의 구형 데이터베이스 SQL (**현행 Neon에서 실행하지 않음**)
 - [neon/](neon/): 과제 7 스키마·추가 마이그레이션 기록 (**운영 DB에 재실행하기 전 별도 검토**)
 - [evidence/](evidence/): 과거 증거 양식. 현재 실측 HTTP 증거로 보완 필요
+
+
+---
+
+## 2026-10-22 추가 검증 — 시크릿 창 최초 로그인 화면 및 계정 삭제 진행 현황
+
+- **시크릿 창 로그인 첫 화면: 사용자 제공 PNG로 직접 확인 완료.** Chrome 시크릿 창에서 Preview `https://plandosee-web-diary2-e640cis8a-jennakim.vercel.app/`의 로그인 화면이 표시되고 이메일·비밀번호 입력란, 로그인 버튼, 회원가입 링크가 보였다. **판정: 화면 접근·표시 통과.** 증거는 대화에 첨부된 `plandosee-screen.png`이며, 이 커밋에는 PNG 원본을 업로드하지 않았다. URL의 추적 쿼리 문자열은 판정에 영향을 주지 않는다.
+- **Preview 빌드:** `feature/task7-safe-account-deletion` 커밋 `dadbb67`의 새 배포 `dpl_zrZxcTEDbyqZ1AApvqLVNEC4rXFe`가 Vercel에서 READY로 확인됨. READY는 빌드 완료이지 가입·로그인·삭제 기능 성공 증거가 아니다.
+- **환경변수 스코프:** `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`의 Preview Git 브랜치가 `feature/task7-safe-account-deletion`인 것을 Vercel 설정 목록에서 확인. **변수 값이 테스트 DB/Auth를 가리키는지의 독립 검증은 별도 필요.** 비밀값은 기록하지 않음.
+- **기존 계정 로그인:** 사용자가 Preview에서 로그인 실패를 보고함. 원인 확정 및 기존 계정 로그인 성공은 미확인.
+- **새 시험 계정:** [계정 삭제 실측 기록](evidence/task7-account-deletion-verification-2026-10-22.md)에 따르면 테스트 Neon Auth 서버 핸들러를 통한 신규 A·B의 가입/로그인/로그아웃/중복·오류 응답 검사는 성공했으나, **Vercel Preview 브라우저의 신규 가입·로그인은 미검증**이다.
+- **삭제 기능:** 테스트 DB의 신규 A·B 각각 임시 기록 2건, 14개 테이블 삭제 로직과 PGlite 모의 테스트 36건 통과. **관리형 Neon Auth 실제 계정 삭제, 삭제 후 401·재로그인 거절, 다른 계정 불변 확인은 미완료.** `ACCOUNT_DELETION_ENABLED`는 활성화하지 않음. Production 적용·실제 사용자 삭제 금지.
+- **추가 증거 한계:** 관리형 Neon Auth의 현재 비밀번호 해시 알고리즘 설정 직접 확인, 과거 HTTP 요청·응답 원본 일부, 전체 기간의 비밀정보 로그 점검은 여전히 미완료. Better Auth 기본 scrypt 공식 문서와 저장 형식·솔트 실측을 관리형 서버의 직접 설정 증거로 혼동하지 않음.
+
+**다음 순서:** (1) Preview의 실제 DB/Auth 연결이 테스트 브랜치로 격리됐는지 확인 → (2) Preview 브라우저 가입·로그인/자료 저장 검증 → (3) 삭제 전 A/B 및 기존 복제 계정 건수·상태 지문 확보 → (4) 신규 테스트 계정 A만을 대상으로 한 영구 삭제의 별도 승인 → (5) 테스트 Preview에서만 allowlist·삭제 플래그 설정 후 실삭제·잔여 기록·이전 세션 차단·대조군 불변 검증 → (6) 플래그 해제 및 PR 증거 반영. 상세: [검증 기록](evidence/task7-account-deletion-verification-2026-10-22.md).
