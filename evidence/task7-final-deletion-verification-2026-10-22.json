@@ -1,0 +1,137 @@
+{
+  "date": "2026-10-22",
+  "timezone": "Asia/Seoul",
+  "target_suffix": "c8776470",
+  "protected_account_modified": false,
+  "environment": "isolated Preview / task7-account-deletion-test",
+  "self_service_deletion": {
+    "result": "rejected_and_rolled_back",
+    "app_status": 409,
+    "provider_status": 404,
+    "verified_success": false
+  },
+  "cleanup": {
+    "method": "Neon administrator deletion plus owner-scoped SQL transaction",
+    "auth_user": 0,
+    "credential": 0,
+    "session": 0,
+    "owned_tables": 14,
+    "owned_records": 0,
+    "deleted_daily_journals": 1,
+    "deleted_weekly_journals": 1
+  },
+  "other_relations": {
+    "compared": 17,
+    "counts_and_fingerprints_unchanged": true
+  },
+  "before_requests": [
+    {
+      "check": "Preview isolation and deletion flag",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "check": "Approved C active session",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "check": "Only approved C and exactly two records",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "check": "Wrong confirmation phrase",
+      "status": 400,
+      "passed": true,
+      "error": "explicit_confirmation_required"
+    },
+    {
+      "check": "Wrong confirmation phrase leaves both records",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "check": "Wrong confirmation email",
+      "status": 400,
+      "passed": true,
+      "error": "account_email_mismatch"
+    },
+    {
+      "check": "Wrong confirmation email leaves both records",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "check": "Wrong password",
+      "status": 409,
+      "passed": true,
+      "error": "auth_delete_unavailable_or_rejected"
+    },
+    {
+      "check": "Wrong password leaves both records",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "check": "Foreign Origin denied",
+      "status": 403,
+      "passed": true,
+      "error": "forbidden_origin"
+    },
+    {
+      "check": "Original cookie private API before deletion",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "check": "Actual self-account deletion",
+      "status": 409,
+      "passed": false,
+      "error": "auth_delete_unavailable_or_rejected",
+      "deleted_records": null,
+      "expired_cookie_count": 0
+    }
+  ],
+  "after_requests": [
+    {
+      "check": "Original signed cookie private data after cleanup",
+      "status": 401,
+      "passed": true,
+      "error": "authentication_required"
+    },
+    {
+      "check": "Original signed cookie deletion preview denied",
+      "status": 401,
+      "passed": true,
+      "error": "authentication_required"
+    },
+    {
+      "check": "Original signed cookie cannot recreate records",
+      "status": 401,
+      "passed": true,
+      "error": "authentication_required"
+    },
+    {
+      "check": "Original signed cookie no longer authenticated",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "check": "Same original credentials cannot log in",
+      "status": 401,
+      "passed": true,
+      "error": "이메일 또는 비밀번호를 확인해 주세요."
+    }
+  ],
+  "automated_tests": {
+    "passed": 38,
+    "failed": 0
+  },
+  "browser_button_verified": false,
+  "end_configuration": {
+    "preview_deletion_enabled": false,
+    "preview_allowlist_cleared": true,
+    "disabled_runtime_verified": true
+  }
+}
