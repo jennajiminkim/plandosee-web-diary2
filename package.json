@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check app.js && node --check auth-ui.js && node --check experiment-ui.js && node --check api/auth.js && node --check api/db.js && node --check api/state.js && node --check api/experiment.js && node --check api/export.js && node --check api/import.js && node --check api/health.js && node --test tests/*.test.mjs",
+    "check": "node --check app.js && node --check auth-ui.js && node --check experiment-ui.js && node --check account-deletion-ui.js && node --check api/account.js && node --check api/auth.js && node --check api/db.js && node --check api/state.js && node --check api/experiment.js && node --check api/export.js && node --check api/import.js && node --check api/health.js && node --test tests/*.test.mjs",
     "test": "node --test tests/*.test.mjs",
     "dev": "vercel dev"
   },
@@ -12,8 +12,11 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@neondatabase/auth": "0.6.0-beta",
     "@neondatabase/serverless": "^1.0.0",
-    "pg": "^8.13.1",
-    "@neondatabase/auth": "0.6.0-beta"
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.11"
   }
 }

@@ -1,7 +1,7 @@
 # T07-C09–C15 — 2일차 이후 계획 규칙 변경 및 동일 측정 기준 검증
 
-검사 일자: 2026-10-18 (Asia/Seoul)  
-검사 대상: Neon `plandosee-web-diary2` 운영 DB의 `public.pds_experiments`, `public.pds_daily_records`, `public.pds_rule_changes`  
+검사 일자: 2026-10-18 (Asia/Seoul)
+검사 대상: Neon `plandosee-web-diary2` 운영 DB의 `public.pds_experiments`, `public.pds_daily_records`, `public.pds_rule_changes`
 검사 방법: 읽기 전용 `SELECT`로 규칙 변경 시점·연결 및 관찰 설정 확인; GitHub `api/experiment.js`의 `revise` 처리 코드 대조. 개인 계정 ID·레코드 UUID·인증 정보 및 일지 원문은 게시하지 않음.
 
 ## 결과
@@ -27,3 +27,7 @@
 ## 판정 범위
 
 **C13–C15의 동일 측정 기준 유지 검증 완료.** 아직 3~5일차 실측 값은 저장되지 않았으므로 **5일 실제 값의 전후 합계·평균 비교 완료를 뜻하지 않는다.** 5일 이후 C07·C132 등을 별도로 확인한다. 운영 DB에 변경/삽입/삭제 요청을 실행하지 않았다.
+
+## 2026-10-22 후속 확인
+
+운영 DB에 10/17~21의 실제 5일 기록이 모두 있으며 값은 3·2·1·2·2건입니다. 합계 10건·평균 2건, 변경 전 평균 2.5·후 평균 1.6667을 대조했습니다. 위 “3~5일차 미기록”은 10/18 검사 당시 상태입니다. [후속 실측과 한계](task7-remaining-checks-2026-10-22.md)를 참고하세요.

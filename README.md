@@ -265,3 +265,12 @@
 - [supabase/](supabase/): 과제 6의 구형 데이터베이스 SQL (**현행 Neon에서 실행하지 않음**)
 - [neon/](neon/): 과제 7 스키마·추가 마이그레이션 기록 (**운영 DB에 재실행하기 전 별도 검토**)
 - [evidence/](evidence/): 과거 증거 양식. 현재 실측 HTTP 증거로 보완 필요
+
+
+---
+
+## 보관된 최초 시크릿 로그인 화면 증거
+
+- **시크릿 창 로그인 첫 화면: 사용자 제공 PNG로 직접 확인 완료.** Chrome 시크릿 창에서 Preview `https://plandosee-web-diary2-e640cis8a-jennakim.vercel.app/`의 로그인 화면이 표시되고 이메일·비밀번호 입력란, 로그인 버튼, 회원가입 링크가 보였다. **판정: 화면 접근·표시 통과.** 증거는 대화에 첨부된 `plandosee-screen.png`이며, 이 커밋에는 PNG 원본을 업로드하지 않았다. URL의 추적 쿼리 문자열은 판정에 영향을 주지 않는다.
+
+최초 화면 검사는 완료 상태로 유지합니다. 후속 Preview·삭제 결과는 [최종 검증](evidence/task7-final-deletion-verification-2026-10-22.md), 실제 제출 파일 보관 범위는 [재제출 점검](evidence/task7-submission-readiness-2026-10-22.md)을 따릅니다.
