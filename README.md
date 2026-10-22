@@ -11,7 +11,7 @@
 >
 > **중요:** 소스에 구현된 기능, 사용자가 실제 확인한 결과, 과제 제출을 위해 아직 증거를 모아야 하는 항목을 구분합니다.
 
-> **2026-10-22 검증 갱신:** 실제 5일 기록과 합계·평균 대조, 사용자 운영 화면 확인, 과제 6 제출 커밋(C77·C78), 자료 처리 안내 대안(C134)을 확인 완료로 반영했습니다. 화면은 사용자 직접 확인 보고이며 AI가 캡처 이미지를 검토한 것으로 기록하지 않습니다. **앱의 자기 계정 영구 삭제는 미검증**입니다(승인된 A의 관리자 삭제 결과는 상단 별도 기록 참조). [검증 근거와 남은 한계](https://github.com/jennajiminkim/plandosee-web-diary2/blob/1161c972b8b8278d116cacba2766469ddebe7418/evidence/task7-remaining-checks-2026-10-22.md).
+> **2026-10-22 검증 갱신:** 실제 5일 기록과 합계·평균 대조, 사용자 운영 화면 확인, 과제 6 제출 커밋(C77·C78), 자료 처리 안내 대안(C134)을 확인 완료로 반영했습니다. 화면은 사용자 직접 확인 보고이며 AI가 캡처 이미지를 검토한 것으로 기록하지 않습니다. **앱의 자기 계정 영구 삭제는 제공자 404로 미통과**입니다(승인된 A의 관리자 삭제 결과는 상단 별도 기록 참조). [검증 근거와 남은 한계](https://github.com/jennajiminkim/plandosee-web-diary2/blob/1161c972b8b8278d116cacba2766469ddebe7418/evidence/task7-remaining-checks-2026-10-22.md).
 
 ## 공식 주소와 소스
 
@@ -62,7 +62,7 @@
 
 - [2026-10-22 최신 검증 결과·후속 사용자 확인](https://github.com/jennajiminkim/plandosee-web-diary2/blob/1161c972b8b8278d116cacba2766469ddebe7418/evidence/task7-remaining-checks-2026-10-22.md) — C77·C132·C134 완료 근거, 실제 5일·계산 대조 및 남은 검증 한계.
 
-- [최신 인증 구현 설명서 6개 항목과 항목별 검증 상태](https://github.com/jennajiminkim/plandosee-web-diary2/blob/1161c972b8b8278d116cacba2766469ddebe7418/TASK7_SUBMISSION.md) — 채점용 설명서 초안, 마스킹 증거, 4줄 확인 방법, AI와 내 판단 3줄, 아직 미완료 항목을 함께 표기합니다.
+- [최신 인증 구현 설명서 6개 항목과 항목별 검증 상태](https://github.com/jennajiminkim/plandosee-web-diary2/blob/feature/task7-safe-account-deletion/TASK7_SUBMISSION.md) — 채점용 설명서 초안, 마스킹 증거, 4줄 확인 방법, AI와 내 판단 3줄, 아직 미완료 항목을 함께 표기합니다.
 - [과거에 통과한 401·404·솔트 검사 기록](evidence/task7-auth-verification.md) — 동일 검사를 다시 요구하지 않기 위한 근거 정리입니다.
 - [2026-10-18 GitHub 전체 브랜치 비밀정보 패턴 검사·해시 근거·마스킹 HTTP 요약](evidence/task7-secret-history-hash-and-http-audit.md) — C46 193개 커밋 검사, C101~103 기본 scrypt 근거, C129 기존 HTTP 7건 비밀 제외 정리 및 미확인 범위.
 - **T07-C78 Git 계승 증거:** T06 원본 저장소 `644525924bbab27a2384fdcf54f1ba62933617e8`가 T07 `main`의 조상입니다(GitHub compare: `status=ahead`, `behind_by=0`, merge base 동일).
