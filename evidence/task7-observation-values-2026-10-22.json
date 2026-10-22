@@ -1,0 +1,16 @@
+{
+  "source": "Read-only SELECT from production Neon on 2026-10-22; identifiers and private notes omitted",
+  "metric_name": "하루에 첫 행동을 실행한 할 일 수",
+  "metric_unit": "건",
+  "records": [
+    {"record_date":"2026-10-17","metric_value":3,"recorded_on_actual_day":true},
+    {"record_date":"2026-10-18","metric_value":2,"recorded_on_actual_day":true},
+    {"record_date":"2026-10-19","metric_value":1,"recorded_on_actual_day":true},
+    {"record_date":"2026-10-20","metric_value":2,"recorded_on_actual_day":true},
+    {"record_date":"2026-10-21","metric_value":2,"recorded_on_actual_day":true}
+  ],
+  "change_time_seoul": "2026-10-18T19:58:50.060+09:00",
+  "correct_day1_day2_links": true,
+  "changed_after_day2_before_day3": true,
+  "expected": {"total_sum":10,"total_mean":2,"day1_day2_sum":5,"day1_day2_mean":2.5,"day3_day5_sum":5,"day3_day5_mean":1.6667}
+}
