@@ -67,7 +67,19 @@ export async function runAccountDeletion({db,userId,managedDelete}){
  const remaining=await countOwnedData(db,userId);
  if(remaining.total!==0)throw error('data_delete_incomplete',503);
  const response=await managedDelete();
- if(!response?.ok)throw error('auth_delete_unavailable_or_rejected',409);
+ if(!response?.ok){
+  // Keep provider bodies private; log only fixed diagnostic categories.
+  // This distinguishes an unsupported provider setting from a wrong password.
+  const failure=await response?.json?.().catch(()=>null);
+  const message=String(failure?.message||failure?.error?.message||'');
+  const code=String(failure?.code||failure?.error?.code||'');
+  const reason=/deletion.*disabled/i.test(message)||['USER_DELETION_DISABLED','USER_DELETION_IS_DISABLED'].includes(code)
+   ?'deletion_disabled':/invalid password|incorrect password|password.*incorrect/i.test(message)||code==='INVALID_PASSWORD'
+   ?'invalid_password':/session.*fresh/i.test(message)||['SESSION_IS_NOT_FRESH','SESSION_NOT_FRESH'].includes(code)
+   ?'session_not_fresh':code==='INVALID_ORIGIN'?'invalid_origin':'unclassified';
+  console.error('Managed Auth deletion rejected',Number(response?.status)||0,reason);
+  throw error('auth_delete_unavailable_or_rejected',409);
+ }
  let payload;
  try{payload=await response.json()}catch{throw error('auth_delete_unverified',503)}
  // Better Auth may return HTTP 200 for "Verification email sent". That is
