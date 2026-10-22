@@ -55,7 +55,7 @@ Neon Auth `neon_auth.account`의 `providerId='credential'` 데이터로 읽기 �
 ## 5. 공개 로그인과 소스 역사
 
 - GitHub 저장소 visibility: **public**(연결된 GitHub API로 확인).
-- 프런트 소스: `index.html` + `auth-ui.js`는 자료 다운로드 전에 세션을 검사하도록 작성됨. **최초 시크릿창 표시 결과의 캡처는 별도 필요**.
+- 프런트 소스: `index.html` + `auth-ui.js`는 자료 다운로드 전에 세션을 검사하도록 작성됨. **2026-10-22 사용자 제공 PNG로 최초 시크릿 창 로그인 화면 접근·표시 확인 완료.** 원본은 대화 첨부 `plandosee-screen.png`에 보관. [확인 근거](task7-initial-login-screen-2026-10-22.md). 재검사·재캡처 불필요.
 - 무인증 직접 보호 API: 사용자 실측 위 **GET /api/state → 401**.
 - T06 원본: `jennajiminkim/plandosee-web-diary`, 마지막 확인한 `main` 커밋 `644525924bbab27a2384fdcf54f1ba62933617e8`.
 - T07 `main`에서 `64452592…`과 비교: GitHub `status=ahead`, `behind_by=0`, `merge_base_commit=64452592…`. **T06 코드 조상 포함 확인**.
