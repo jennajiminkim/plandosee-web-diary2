@@ -19,7 +19,7 @@
    const payload=await response.json();
    if(!response.ok)throw Error(payload.error||'삭제 대상 조회 실패');
    expectedEmail=payload.account_email||'';
-   summary.textContent='본인 기록 '+payload.record_count+'건 (총 13개 자료 종류 포함). '+(
+   summary.textContent='본인 기록 '+payload.record_count+'건 (총 '+Object.keys(payload.collections).length+'개 자료 종류 포함). '+(
     payload.deletion_enabled?'비밀번호와 확인 문구를 입력해야 삭제할 수 있습니다.':
     '현재 실제 계정 삭제는 비활성화되어 있습니다. 관리자 검증이 끝난 뒤 사용할 수 있습니다.'
    );

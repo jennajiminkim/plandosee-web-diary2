@@ -25,8 +25,17 @@ export async function requireUser(req) {
 export async function asUser(userId,callback) {
   if(!process.env.DATABASE_URL) throw error('database_not_configured',503);
   const client=await pool.connect();
+  try { return await inUserTransaction(client,userId,callback); }
+  finally { client.release(); }
+}
+export async function inUserTransaction(client,userId,callback) {
   try {
     await client.query('BEGIN');
+    // Serialize all app data operations with account deletion. A request that
+    // authenticated before deletion must not recreate rows after it commits.
+    await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[userId]);
+    const identity=await client.query('SELECT EXISTS (SELECT 1 FROM neon_auth."user" WHERE id::text=$1) AS present',[userId]);
+    if(identity.rows[0]?.present!==true)throw error('authentication_required',401);
     // Connection role can be Neon owner, but EVERY data query is executed under
     // a non-login, non-BYPASSRLS PostgreSQL role inside this transaction.
     await client.query('SET LOCAL ROLE pds_runtime');
@@ -37,8 +46,6 @@ export async function asUser(userId,callback) {
   } catch(e) {
     await client.query('ROLLBACK').catch(()=>{});
     throw e;
-  } finally {
-    client.release();
   }
 }
 export const validId=x=>typeof x==='string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x);

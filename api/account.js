@@ -1,9 +1,10 @@
 // Task 7: account deletion flow. Disabled by default until managed-auth support is verified.
 // NEVER accept a user_id from the browser. All rows are scoped to a verified session.
-import {neonAuth,sessionInfo} from './auth.js';
+import {neonAuth,sessionInfo,forwardCookies} from './auth.js';
 import {asUser,error} from './db.js';
 
 export const privateCollections=[
+ ['importBatches','pds_import_batches'],
  ['ruleChanges','pds_rule_changes'],['dailyRecords','pds_daily_records'],['experiments','pds_experiments'],
  ['dailyJournals','pds_daily_journals'],['journals','pds_weekly_reviews'],
  ['completions','pds_completion_events'],['logs','pds_logs'],['cells','pds_cells'],
@@ -11,6 +12,13 @@ export const privateCollections=[
  ['tasks','pds_tasks'],['plans','pds_plans'],['colors','pds_color_swatches']
 ];
 const JSON_HEADERS={'Cache-Control':'private, no-store','Content-Type':'application/json; charset=utf-8'};
+export function deletionEnabledFor(userId,env=process.env){
+ if(env.ACCOUNT_DELETION_ENABLED!=='true')return false;
+ // Preview branches may contain copied identities. Enable destructive testing
+ // for one newly created fixture only, never every copied account.
+ if(env.VERCEL_ENV==='preview')return Boolean(env.ACCOUNT_DELETION_TEST_USER_ID)&&env.ACCOUNT_DELETION_TEST_USER_ID===userId;
+ return true;
+}
 function respond(res,code,data){
  for(const [key,value] of Object.entries(JSON_HEADERS))res.setHeader(key,value);
  return res.status(code).json(data);
@@ -78,10 +86,10 @@ export default async function handler(req,res){
   const userId=session.user.id,email=session.user.email;
   if(req.method==='GET'){
    const preview=await asUser(userId,db=>countOwnedData(db,userId));
-   return respond(res,200,{account_email:email,record_count:preview.total,collections:preview.counts,deletion_enabled:process.env.ACCOUNT_DELETION_ENABLED==='true'});
+   return respond(res,200,{account_email:email,record_count:preview.total,collections:preview.counts,deletion_enabled:deletionEnabledFor(userId)});
   }
   if(!originOk(req))throw error('forbidden_origin',403);
-  if(process.env.ACCOUNT_DELETION_ENABLED!=='true')throw error('account_deletion_not_enabled',409);
+  if(!deletionEnabledFor(userId))throw error('account_deletion_not_enabled',409);
   const raw=typeof req.body==='string'?req.body:JSON.stringify(req.body||{});
   if(Buffer.byteLength(raw)>2048)throw error('request_too_large',413);
   let body;
@@ -90,9 +98,14 @@ export default async function handler(req,res){
   // This is a distributed operation; if the auth provider deletes the identity
   // but the final database commit fails, an operator must reconcile orphaned
   // rows. Do NOT claim cross-system atomicity.
+  let deletionResponse;
   const outcome=await asUser(userId,db=>runAccountDeletion({
-   db,userId,managedDelete:()=>neonAuth(req,'deleteSelf',{password})
+   db,userId,managedDelete:async()=>{
+    deletionResponse=await neonAuth(req,'deleteSelf',{password});
+    return deletionResponse;
+   }
   }));
+  forwardCookies(res,deletionResponse);
   return respond(res,200,{deleted:outcome.deleted,deleted_records:outcome.record_count});
  }catch(e){
   if(e?.status)return respond(res,e.status,{error:e.message});

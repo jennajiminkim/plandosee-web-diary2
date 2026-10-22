@@ -47,7 +47,8 @@ export async function neonAuth(req, action, body) {
     'Origin':origin,
     'Cookie':req.headers.cookie||''
   });
-  const request=new Request(origin+'/api/auth/'+action,{
+  // Check the provider's session store even when the caller has cached cookies.
+  const request=new Request(origin+'/api/auth/'+action+(action==='session'?'?disableCookieCache=true':''),{
     method:spec.method,headers,
     body:spec.method==='POST'?JSON.stringify(body||{}):undefined
   });

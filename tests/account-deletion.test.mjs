@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
  privateCollections,countOwnedData,clearOwnedData,
- validateDeletionConfirmation,runAccountDeletion
+ validateDeletionConfirmation,runAccountDeletion,deletionEnabledFor
 } from '../api/account.js';
 
 const UID='not-a-real-account';
@@ -35,14 +35,14 @@ test('account deletion requires exact session email, phrase and password',()=>{
   assert.throws(()=>validateDeletionConfirmation({body:{...confirmation,...patch},email:confirmation.email}));
  }
 });
-test('preview lists 13 tables, only within session-scoped user ID',async()=>{
+test('preview lists 14 tables, only within session-scoped user ID',async()=>{
  const f=fixture(2);
  const result=await countOwnedData(f.db,UID);
- assert.equal(privateCollections.length,13);
- assert.equal(result.total,26);
- assert.equal(f.queries.length,13);
+ assert.equal(privateCollections.length,14);
+ assert.equal(result.total,28);
+ assert.equal(f.queries.length,14);
 });
-test('actual deletion removes all 13 datasets by owner and confirms provider completion',async()=>{
+test('actual deletion removes all 14 datasets by owner and confirms provider completion',async()=>{
  const f=fixture(2);
  let invoked=0;
  const result=await runAccountDeletion({db:f.db,userId:UID,managedDelete:async()=>{
@@ -50,8 +50,8 @@ test('actual deletion removes all 13 datasets by owner and confirms provider com
  }});
  assert.equal(invoked,1);
  assert.equal(result.deleted,true);
- assert.equal(result.record_count,26);
- assert.equal(f.queries.length,39);
+ assert.equal(result.record_count,28);
+ assert.equal(f.queries.length,42);
  assert.ok([...f.rows.values()].every(n=>n===0));
 });
 test('rejected managed authentication deletion is not reported successful',async()=>{
@@ -71,4 +71,12 @@ test('auth delete endpoint is server-only and actual deletion opt-in is off by d
  assert.match(account,/ACCOUNT_DELETION_ENABLED!=='true'/);
  assert.match(account,/forbidden_origin/);
  assert.match(account,/password_confirmation_required/);
+});
+test('Preview deletion enables only one explicitly selected disposable account',()=>{
+ const env={VERCEL_ENV:'preview',ACCOUNT_DELETION_ENABLED:'true'};
+ assert.equal(deletionEnabledFor(UID,env),false);
+ env.ACCOUNT_DELETION_TEST_USER_ID=UID;
+ assert.equal(deletionEnabledFor(UID,env),true);
+ assert.equal(deletionEnabledFor('other-user',env),false);
+ assert.equal(deletionEnabledFor(UID,{...env,ACCOUNT_DELETION_ENABLED:'false'}),false);
 });
